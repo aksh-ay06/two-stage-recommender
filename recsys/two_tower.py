@@ -101,7 +101,9 @@ class HistoryIndex:
         return out
 
 
-def train_two_tower(ds: Dataset, train_df: pd.DataFrame, cfg: TwoTowerConfig = TwoTowerConfig()) -> tuple[TwoTower, HistoryIndex]:
+def train_two_tower(ds: Dataset, train_df: pd.DataFrame, cfg: TwoTowerConfig = TwoTowerConfig(),
+                    min_rating: int = 1) -> tuple[TwoTower, HistoryIndex]:
+    """History is built from every interaction; only rows rated >= min_rating are training targets."""
     torch.manual_seed(cfg.seed)
     rng = np.random.default_rng(cfg.seed)
     model = TwoTower(ds, cfg)
@@ -111,9 +113,10 @@ def train_two_tower(ds: Dataset, train_df: pd.DataFrame, cfg: TwoTowerConfig = T
     users_all = torch.tensor(train_df.user.to_numpy(), dtype=torch.long)
     items_all = hidx.items
     start_all = torch.tensor(hidx.user_start, dtype=torch.long)
-    n = len(train_df)
+    eligible = np.flatnonzero(train_df.rating.to_numpy() >= min_rating)
+    n = len(eligible)
     # logQ: sampling probability of each item as an in-batch negative ~ its frequency.
-    freq = np.bincount(train_df.item.to_numpy(), minlength=ds.n_items) + 1.0
+    freq = np.bincount(train_df.item.to_numpy()[eligible], minlength=ds.n_items) + 1.0
     log_q = torch.tensor(np.log(freq / freq.sum()), dtype=torch.float32)
 
     steps = int(np.ceil(n / cfg.batch_size)) * cfg.epochs
@@ -122,7 +125,7 @@ def train_two_tower(ds: Dataset, train_df: pd.DataFrame, cfg: TwoTowerConfig = T
     for epoch in range(cfg.epochs):
         model.train()
         t0, total = time.time(), 0.0
-        perm = torch.tensor(rng.permutation(n))
+        perm = torch.tensor(rng.permutation(eligible))
         for b in range(0, n, cfg.batch_size):
             rows = perm[b:b + cfg.batch_size]
             u, it = users_all[rows], items_all[rows]
