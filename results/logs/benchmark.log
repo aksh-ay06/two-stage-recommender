@@ -1,0 +1,14 @@
+== Part A: per-request latency, single thread ==
+  user_tower  p50=1.18ms  p95=1.56ms  p99=1.78ms
+  retrieval   p50=0.21ms  p95=0.30ms  p99=0.40ms
+  features    p50=1.51ms  p95=2.11ms  p99=2.40ms
+  gbm         p50=7.18ms  p95=9.18ms  p99=10.53ms
+  total       p50=10.13ms  p95=12.98ms  p99=16.14ms
+  offline batch (history index + item embeddings + feature store): 1.3s
+
+== Part B: retrieval at scale (exact vs FAISS HNSW, top-200, single-thread queries) ==
+  n=    3,706  exact p50=0.15ms  build=1s  ef=256: R=1.000 p50=0.75ms  ef=512: R=1.000 p50=1.49ms  ef=1024: R=1.000 p50=3.86ms
+  n=  100,000  exact p50=3.62ms  build=32s  ef=256: R=0.960 p50=2.17ms  ef=512: R=0.992 p50=4.67ms  ef=1024: R=0.999 p50=8.68ms
+  n=1,000,000  exact p50=38.54ms  build=599s  ef=256: R=0.824 p50=1.97ms  ef=512: R=0.927 p50=3.64ms  ef=1024: R=0.976 p50=7.67ms
+
+Saved C:\Users\ap783\OneDrive\Desktop\Recommender System\results\serving_benchmark.json
