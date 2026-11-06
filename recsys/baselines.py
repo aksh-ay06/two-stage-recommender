@@ -54,6 +54,6 @@ def top_k_unseen(scores: np.ndarray, X: np.ndarray, users: np.ndarray, k: int) -
 
 BASELINES = {
     "Popularity": (lambda X, _: popularity_scores(X), [None]),
-    "Item-kNN": (itemknn_scores, [20, 50, 100, 200, 400, 800]),
-    "EASE": (ease_scores, [100, 250, 500, 1000, 2000, 4000, 8000]),
+    "Item-kNN": (itemknn_scores, [20, 50, 100, 200, 400, 800, 1600, 3200]),
+    "EASE": (ease_scores, [100, 250, 500, 1000, 2000, 4000, 8000, 16000, 32000, 64000]),
 }

@@ -38,7 +38,9 @@ over the test window. It's the closest online counterpart to NDCG/Recall@K.
 * Total watch time per user across the whole product (checks for cannibalization)
 
 **Guardrails (must not get worse, non-inferiority margin of -1% relative):**
-* p95 recommendation latency (the reranker adds feature fetch + GBM scoring of 200 candidates)
+* p95 recommendation latency. Offline, the reranker adds feature transform + GBM scoring of
+  200 candidates, about 9 ms of a 13 ms end-to-end p95 on one CPU thread
+  (`scripts/benchmark_serving.py`). Check it under production load in the A/A period.
 * Overall sessions per user and 7-day retention
 * Error or empty-row rate
 
