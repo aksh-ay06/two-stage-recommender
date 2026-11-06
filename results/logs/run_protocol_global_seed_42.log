@@ -1,0 +1,61 @@
+### run global_minr1_seed42
+train=800,164 val_targets=23,639 (520 users) train_val=900,188 test_targets=95,582 (1,175 users)
+loading cached stage-1 outputs: global_minr1_seed42_e6_c200.pkl
+
+== Baselines (hyperparameters tuned on VAL) ==
+  [Item-kNN] param=20    val NDCG@10=0.1122
+  [Item-kNN] param=50    val NDCG@10=0.1135
+  [Item-kNN] param=100   val NDCG@10=0.1178
+  [Item-kNN] param=200   val NDCG@10=0.1245
+  [Item-kNN] param=400   val NDCG@10=0.1371
+  [Item-kNN] param=800   val NDCG@10=0.1423
+  [Item-kNN] param=1600  val NDCG@10=0.1478
+  [Item-kNN] param=3200  val NDCG@10=0.1445
+  [EASE] param=100   val NDCG@10=0.1278
+  [EASE] param=250   val NDCG@10=0.1305
+  [EASE] param=500   val NDCG@10=0.1321
+  [EASE] param=1000  val NDCG@10=0.1370
+  [EASE] param=2000  val NDCG@10=0.1391
+  [EASE] param=4000  val NDCG@10=0.1419
+  [EASE] param=8000  val NDCG@10=0.1445
+  [EASE] param=16000 val NDCG@10=0.1471
+  [EASE] param=32000 val NDCG@10=0.1479
+  [EASE] param=64000 val NDCG@10=0.1454
+
+== Rankers ==
+  [ranker] drop=-  train rows=65,600 users=328 pos_rate=0.0680
+  [ranker] best_iter=20
+  [ranker] drop=['sim_recent_max', 'sim_recent_mean', 'sim_last']  train rows=65,600 users=328 pos_rate=0.0680
+  [ranker] best_iter=19
+  [ranker] drop=['tt_score', 'tt_rank']  train rows=65,600 users=328 pos_rate=0.0680
+  [ranker] best_iter=38
+
+VAL (ranker-holdout users, n=104) -> selected ranker: GBM w/o recency sims
+                                      NDCG@10  Recall@10  NDCG@20  Recall@200
+Popularity                             0.1360     0.0426   0.1391      0.3507
+Item-kNN                               0.1801     0.0673   0.1690      0.2975
+EASE                                   0.1752     0.0674   0.1727      0.3637
+Two-tower                              0.1131     0.0387   0.1178      0.3601
+Two-tower, ordered by sim_recent_max   0.0937     0.0507   0.1067      0.3601
+GBM (all features)                     0.1656     0.0935   0.1666      0.3601
+GBM w/o recency sims                   0.1744     0.0947   0.1738      0.3601
+GBM w/o two-tower feats                0.1680     0.0966   0.1705      0.3601
+
+TEST (1,175 users) - reporting only:
+                                      Recall@10  NDCG@10  Recall@20  NDCG@20  Recall@50  NDCG@50  Recall@200  NDCG@200
+Popularity                               0.0393   0.2536     0.0707   0.2401     0.1428   0.2274      0.3418    0.2679
+Item-kNN                                 0.0427   0.2653     0.0713   0.2464     0.1355   0.2303      0.3273    0.2671
+EASE                                     0.0508   0.2836     0.0844   0.2667     0.1629   0.2529      0.3857    0.3008
+Two-tower                                0.0370   0.1866     0.0610   0.1772     0.1234   0.1760      0.3166    0.2258
+Two-tower, ordered by sim_recent_max     0.0347   0.1585     0.0589   0.1576     0.1235   0.1630      0.3166    0.2215
+GBM (all features)                       0.0506   0.2483     0.0815   0.2333     0.1526   0.2259      0.3166    0.2506
+GBM w/o recency sims                     0.0530   0.2534     0.0855   0.2395     0.1548   0.2299      0.3166    0.2532
+GBM w/o two-tower feats                  0.0536   0.2562     0.0865   0.2409     0.1555   0.2296      0.3166    0.2533
+
+  GBM w/o recency sims vs Two-tower: NDCG@10 +35.8%  95% CI [+28.5%, +43.7%]
+  GBM w/o recency sims vs EASE: NDCG@10 -10.7%  95% CI [-15.0%, -6.2%]
+  GBM w/o recency sims vs Item-kNN: NDCG@10 -4.5%  95% CI [-9.6%, +0.7%]
+  GBM w/o recency sims vs Two-tower, ordered by sim_recent_max: NDCG@10 +59.9%  95% CI [+50.4%, +70.3%]
+  EASE vs Two-tower: NDCG@10 +52.0%  95% CI [+42.9%, +61.5%]
+
+Saved C:\Users\ap783\OneDrive\Desktop\Recommender System\results\runs\global_minr1_seed42  (91s)

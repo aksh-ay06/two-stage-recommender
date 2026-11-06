@@ -1,0 +1,193 @@
+protocol,min_rating,system,metric,mean,std,n_seeds
+global,1,EASE,NDCG@10,0.2836144245677832,,1
+global,1,EASE,NDCG@20,0.2666652887403692,,1
+global,1,EASE,NDCG@200,0.3007729835097876,,1
+global,1,EASE,NDCG@50,0.252921196907406,,1
+global,1,EASE,Recall@10,0.05076259613712764,,1
+global,1,EASE,Recall@20,0.0844491583065961,,1
+global,1,EASE,Recall@200,0.3856797254987623,,1
+global,1,EASE,Recall@50,0.16285434592989112,,1
+global,1,GBM (all features),NDCG@10,0.24827144388324168,,1
+global,1,GBM (all features),NDCG@20,0.2332834238272863,,1
+global,1,GBM (all features),NDCG@200,0.2506453747328509,,1
+global,1,GBM (all features),NDCG@50,0.22594120973724005,,1
+global,1,GBM (all features),Recall@10,0.05062151102175964,,1
+global,1,GBM (all features),Recall@20,0.08150834994070208,,1
+global,1,GBM (all features),Recall@200,0.3165832211605659,,1
+global,1,GBM (all features),Recall@50,0.15257829045485682,,1
+global,1,GBM w/o two-tower feats,NDCG@10,0.25615083462670923,,1
+global,1,GBM w/o two-tower feats,NDCG@20,0.24088098515928502,,1
+global,1,GBM w/o two-tower feats,NDCG@200,0.25334630208431985,,1
+global,1,GBM w/o two-tower feats,NDCG@50,0.22957008893799644,,1
+global,1,GBM w/o two-tower feats,Recall@10,0.05356374469829831,,1
+global,1,GBM w/o two-tower feats,Recall@20,0.0864594422210726,,1
+global,1,GBM w/o two-tower feats,Recall@200,0.3165832211605659,,1
+global,1,GBM w/o two-tower feats,Recall@50,0.1555234172640898,,1
+global,1,Item-kNN,NDCG@10,0.26525558172433344,,1
+global,1,Item-kNN,NDCG@20,0.2463817348536067,,1
+global,1,Item-kNN,NDCG@200,0.267078466134062,,1
+global,1,Item-kNN,NDCG@50,0.23032325147459712,,1
+global,1,Item-kNN,Recall@10,0.04271045294410974,,1
+global,1,Item-kNN,Recall@20,0.07126740119520587,,1
+global,1,Item-kNN,Recall@200,0.3272614150333372,,1
+global,1,Item-kNN,Recall@50,0.1355084437656312,,1
+global,1,Popularity,NDCG@10,0.2536385762032336,,1
+global,1,Popularity,NDCG@20,0.24009421901529593,,1
+global,1,Popularity,NDCG@200,0.2678738223966769,,1
+global,1,Popularity,NDCG@50,0.22735444054993248,,1
+global,1,Popularity,Recall@10,0.0392821411032734,,1
+global,1,Popularity,Recall@20,0.0706709258086564,,1
+global,1,Popularity,Recall@200,0.3418138381717207,,1
+global,1,Popularity,Recall@50,0.14278153963523157,,1
+global,1,Two-stage (GBM rerank),NDCG@10,0.25335523592518644,,1
+global,1,Two-stage (GBM rerank),NDCG@20,0.23949157237393268,,1
+global,1,Two-stage (GBM rerank),NDCG@200,0.2532131323923024,,1
+global,1,Two-stage (GBM rerank),NDCG@50,0.2299091627683912,,1
+global,1,Two-stage (GBM rerank),Recall@10,0.052958031180966814,,1
+global,1,Two-stage (GBM rerank),Recall@20,0.08553666174085861,,1
+global,1,Two-stage (GBM rerank),Recall@200,0.3165832211605659,,1
+global,1,Two-stage (GBM rerank),Recall@50,0.15484063580864252,,1
+global,1,Two-tower,NDCG@10,0.18663062916718223,,1
+global,1,Two-tower,NDCG@20,0.17722111940797808,,1
+global,1,Two-tower,NDCG@200,0.22584676248778723,,1
+global,1,Two-tower,NDCG@50,0.1760227576477988,,1
+global,1,Two-tower,Recall@10,0.03703653754720326,,1
+global,1,Two-tower,Recall@20,0.06103704987158627,,1
+global,1,Two-tower,Recall@200,0.3165832211605659,,1
+global,1,Two-tower,Recall@50,0.12342398010566077,,1
+global,1,"Two-tower, ordered by sim_recent_max",NDCG@10,0.15846844357642204,,1
+global,1,"Two-tower, ordered by sim_recent_max",NDCG@20,0.1575777528389274,,1
+global,1,"Two-tower, ordered by sim_recent_max",NDCG@200,0.22150078580216775,,1
+global,1,"Two-tower, ordered by sim_recent_max",NDCG@50,0.16302820418172617,,1
+global,1,"Two-tower, ordered by sim_recent_max",Recall@10,0.03474938010066966,,1
+global,1,"Two-tower, ordered by sim_recent_max",Recall@20,0.0588606866615976,,1
+global,1,"Two-tower, ordered by sim_recent_max",Recall@200,0.3165832211605659,,1
+global,1,"Two-tower, ordered by sim_recent_max",Recall@50,0.12349217679818895,,1
+last_k,1,EASE,NDCG@10,0.07123636264049905,0.0,3
+last_k,1,EASE,NDCG@20,0.09875103814699952,0.0,3
+last_k,1,EASE,NDCG@200,0.2239907294130283,0.0,3
+last_k,1,EASE,NDCG@50,0.14494627216128977,0.0,3
+last_k,1,EASE,Recall@10,0.08711920529801326,0.0,3
+last_k,1,EASE,Recall@20,0.15182119205298014,0.0,3
+last_k,1,EASE,Recall@200,0.6002649006622517,0.0,3
+last_k,1,EASE,Recall@50,0.29019867549668876,0.0,3
+last_k,1,GBM w/o recency sims,NDCG@10,0.1145052238678818,0.0012720239946329619,3
+last_k,1,GBM w/o recency sims,NDCG@20,0.14887632684055443,0.0015645079798480806,3
+last_k,1,GBM w/o recency sims,NDCG@200,0.26596002075640884,0.0013476098180824495,3
+last_k,1,GBM w/o recency sims,NDCG@50,0.19840977811868202,0.0008410799366370043,3
+last_k,1,GBM w/o recency sims,Recall@10,0.13451434878587196,0.001879655626214664,3
+last_k,1,GBM w/o recency sims,Recall@20,0.2151655629139073,0.0024843265538944093,3
+last_k,1,GBM w/o recency sims,Recall@200,0.626887417218543,0.0025328420406971284,3
+last_k,1,GBM w/o recency sims,Recall@50,0.3626379690949227,0.0009136513062505486,3
+last_k,1,GBM w/o two-tower feats,NDCG@10,0.12674034816748395,0.00028160345185548316,3
+last_k,1,GBM w/o two-tower feats,NDCG@20,0.1600078749243835,0.0004911916887356163,3
+last_k,1,GBM w/o two-tower feats,NDCG@200,0.2753401883365245,0.0009970572573407318,3
+last_k,1,GBM w/o two-tower feats,NDCG@50,0.20873882985804423,0.00046875611423160515,3
+last_k,1,GBM w/o two-tower feats,Recall@10,0.14465783664459161,0.0009558779291219019,3
+last_k,1,GBM w/o two-tower feats,Recall@20,0.22269315673289183,0.0009633049237818423,3
+last_k,1,GBM w/o two-tower feats,Recall@200,0.626887417218543,0.0025328420406971284,3
+last_k,1,GBM w/o two-tower feats,Recall@50,0.36815673289183226,0.0008662174021295234,3
+last_k,1,Item-kNN,NDCG@10,0.0584385060968888,0.0,3
+last_k,1,Item-kNN,NDCG@20,0.07810797632685373,0.0,3
+last_k,1,Item-kNN,NDCG@200,0.17431882817749503,0.0,3
+last_k,1,Item-kNN,NDCG@50,0.11105587959802084,0.0,3
+last_k,1,Item-kNN,Recall@10,0.0695364238410596,0.0,3
+last_k,1,Item-kNN,Recall@20,0.11576158940397352,0.0,3
+last_k,1,Item-kNN,Recall@200,0.4649006622516556,0.0,3
+last_k,1,Item-kNN,Recall@50,0.21453642384105964,0.0,3
+last_k,1,Popularity,NDCG@10,0.0327329846609184,0.0,3
+last_k,1,Popularity,NDCG@20,0.046090362212522086,0.0,3
+last_k,1,Popularity,NDCG@200,0.11885433444335837,0.0,3
+last_k,1,Popularity,NDCG@50,0.0684294455346967,0.0,3
+last_k,1,Popularity,Recall@10,0.03903973509933775,0.0,3
+last_k,1,Popularity,Recall@20,0.0704635761589404,0.0,3
+last_k,1,Popularity,Recall@200,0.3378476821192053,0.0,3
+last_k,1,Popularity,Recall@50,0.1375496688741722,0.0,3
+last_k,1,Two-stage (GBM rerank),NDCG@10,0.1385132554103389,0.000950525808644938,3
+last_k,1,Two-stage (GBM rerank),NDCG@20,0.17622330226125052,0.0008427077671478336,3
+last_k,1,Two-stage (GBM rerank),NDCG@200,0.28612204176322836,0.0011711453291672234,3
+last_k,1,Two-stage (GBM rerank),NDCG@50,0.22714735173138026,0.0007046139824700813,3
+last_k,1,Two-stage (GBM rerank),Recall@10,0.1586644591611479,0.0015581689862123492,3
+last_k,1,Two-stage (GBM rerank),Recall@20,0.24706401766004416,0.0010833095768048406,3
+last_k,1,Two-stage (GBM rerank),Recall@200,0.626887417218543,0.0025328420406971284,3
+last_k,1,Two-stage (GBM rerank),Recall@50,0.398719646799117,0.0007845190129764667,3
+last_k,1,Two-tower,NDCG@10,0.11300644760010313,0.0015579160178841604,3
+last_k,1,Two-tower,NDCG@20,0.14696374300640203,0.0012932534439576045,3
+last_k,1,Two-tower,NDCG@200,0.2651281435890807,0.0018176774473276022,3
+last_k,1,Two-tower,NDCG@50,0.19754835220985748,0.0013579077979619617,3
+last_k,1,Two-tower,Recall@10,0.13247240618101544,0.002103192121892122,3
+last_k,1,Two-tower,Recall@20,0.2122075055187638,0.001399112748564298,3
+last_k,1,Two-tower,Recall@200,0.626887417218543,0.0025328420406971284,3
+last_k,1,Two-tower,Recall@50,0.3628697571743929,0.0009184390314663842,3
+last_k,1,"Two-tower, ordered by sim_recent_max",NDCG@10,0.08720985049838487,0.0024049655468912985,3
+last_k,1,"Two-tower, ordered by sim_recent_max",NDCG@20,0.11589339838508632,0.0014512445840268679,3
+last_k,1,"Two-tower, ordered by sim_recent_max",NDCG@200,0.24363131696208798,0.0020356747685533775,3
+last_k,1,"Two-tower, ordered by sim_recent_max",NDCG@50,0.16424877013331882,0.0013892168304614437,3
+last_k,1,"Two-tower, ordered by sim_recent_max",Recall@10,0.10470198675496689,0.0020035164910471312,3
+last_k,1,"Two-tower, ordered by sim_recent_max",Recall@20,0.1720971302428256,0.0005700110964095185,3
+last_k,1,"Two-tower, ordered by sim_recent_max",Recall@200,0.626887417218543,0.0025328420406971284,3
+last_k,1,"Two-tower, ordered by sim_recent_max",Recall@50,0.31678807947019866,0.00045882140597850905,3
+last_k,4,EASE,NDCG@10,0.07216597896920707,,1
+last_k,4,EASE,NDCG@20,0.09808891721774866,,1
+last_k,4,EASE,NDCG@200,0.2073226672212823,,1
+last_k,4,EASE,NDCG@50,0.13933961053574176,,1
+last_k,4,EASE,Recall@10,0.1027462632811093,,1
+last_k,4,EASE,Recall@20,0.17634311783420373,,1
+last_k,4,EASE,Recall@200,0.6414520679512576,,1
+last_k,4,EASE,Recall@50,0.32362386697881024,,1
+last_k,4,GBM w/o recency sims,NDCG@10,0.08882887916670902,,1
+last_k,4,GBM w/o recency sims,NDCG@20,0.1164680141357944,,1
+last_k,4,GBM w/o recency sims,NDCG@200,0.2127544011885806,,1
+last_k,4,GBM w/o recency sims,NDCG@50,0.15781223028163452,,1
+last_k,4,GBM w/o recency sims,Recall@10,0.12633411369229844,,1
+last_k,4,GBM w/o recency sims,Recall@20,0.20311843447986075,,1
+last_k,4,GBM w/o recency sims,Recall@200,0.6049042559577407,,1
+last_k,4,GBM w/o recency sims,Recall@50,0.35051023470796566,,1
+last_k,4,GBM w/o two-tower feats,NDCG@10,0.10471204763107392,,1
+last_k,4,GBM w/o two-tower feats,NDCG@20,0.13238490082335796,,1
+last_k,4,GBM w/o two-tower feats,NDCG@200,0.22497724252401644,,1
+last_k,4,GBM w/o two-tower feats,NDCG@50,0.1705907601690496,,1
+last_k,4,GBM w/o two-tower feats,Recall@10,0.1418302419112792,,1
+last_k,4,GBM w/o two-tower feats,Recall@20,0.21973707905636589,,1
+last_k,4,GBM w/o two-tower feats,Recall@200,0.6049042559577407,,1
+last_k,4,GBM w/o two-tower feats,Recall@50,0.3544870640494628,,1
+last_k,4,Item-kNN,NDCG@10,0.060292851515211104,,1
+last_k,4,Item-kNN,NDCG@20,0.08034126340600163,,1
+last_k,4,Item-kNN,NDCG@200,0.16713905218587782,,1
+last_k,4,Item-kNN,NDCG@50,0.11101772469205348,,1
+last_k,4,Item-kNN,Recall@10,0.0837655321447866,,1
+last_k,4,Item-kNN,Recall@20,0.1402185005102347,,1
+last_k,4,Item-kNN,Recall@200,0.5130890209496368,,1
+last_k,4,Item-kNN,Recall@50,0.24913260099645837,,1
+last_k,4,Popularity,NDCG@10,0.03430195507671701,,1
+last_k,4,Popularity,NDCG@20,0.04866578906268475,,1
+last_k,4,Popularity,NDCG@200,0.11821141794779767,,1
+last_k,4,Popularity,NDCG@50,0.07136548207426975,,1
+last_k,4,Popularity,Recall@10,0.046632450927426614,,1
+last_k,4,Popularity,Recall@20,0.0864397622906537,,1
+last_k,4,Popularity,Recall@200,0.38794045260819976,,1
+last_k,4,Popularity,Recall@50,0.16694579506573023,,1
+last_k,4,Two-stage (GBM rerank),NDCG@10,0.11269322707816568,,1
+last_k,4,Two-stage (GBM rerank),NDCG@20,0.14172732147896624,,1
+last_k,4,Two-stage (GBM rerank),NDCG@200,0.2319029761239945,,1
+last_k,4,Two-stage (GBM rerank),NDCG@50,0.18176449139579895,,1
+last_k,4,Two-stage (GBM rerank),Recall@10,0.15163875382676031,,1
+last_k,4,Two-stage (GBM rerank),Recall@20,0.233030193889189,,1
+last_k,4,Two-stage (GBM rerank),Recall@200,0.6049042559577407,,1
+last_k,4,Two-stage (GBM rerank),Recall@50,0.3740410588870881,,1
+last_k,4,Two-tower,NDCG@10,0.08642452072894329,,1
+last_k,4,Two-tower,NDCG@20,0.11404872161273867,,1
+last_k,4,Two-tower,NDCG@200,0.21051338699651334,,1
+last_k,4,Two-tower,NDCG@50,0.15338271996163477,,1
+last_k,4,Two-tower,Recall@10,0.12080256918182365,,1
+last_k,4,Two-tower,Recall@20,0.19801908878083918,,1
+last_k,4,Two-tower,Recall@200,0.6049042559577407,,1
+last_k,4,Two-tower,Recall@50,0.33732516957800585,,1
+last_k,4,"Two-tower, ordered by sim_recent_max",NDCG@10,0.0734498222170325,,1
+last_k,4,"Two-tower, ordered by sim_recent_max",NDCG@20,0.09785074150996743,,1
+last_k,4,"Two-tower, ordered by sim_recent_max",NDCG@200,0.19928565354326852,,1
+last_k,4,"Two-tower, ordered by sim_recent_max",NDCG@50,0.13538930166653057,,1
+last_k,4,"Two-tower, ordered by sim_recent_max",Recall@10,0.10627888828861276,,1
+last_k,4,"Two-tower, ordered by sim_recent_max",Recall@20,0.17495347860015606,,1
+last_k,4,"Two-tower, ordered by sim_recent_max",Recall@200,0.6049042559577407,,1
+last_k,4,"Two-tower, ordered by sim_recent_max",Recall@50,0.30734737979470556,,1
