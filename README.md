@@ -1,6 +1,8 @@
 # Two-Stage Recommender: Two-Tower + EASE Retrieval, GBM Reranking
 
-An end-to-end recommender on **MovieLens-1M** (1M ratings, 6,040 users, 3,706 movies):
+An end-to-end recommender on **MovieLens-1M** (1M ratings, 6,040 users, 3,706 movies),
+repeated on **H&M** (31.8M purchases, 1.37M customers, 105k articles; see
+[below](#hm-105k-articles-real-purchases)):
 
 1. **Retrieval:** a PyTorch two-tower model and a closed-form EASE model each pick their top
    200 items per user from the full catalog. Their union, about 310 items, is the candidate set.
@@ -48,6 +50,34 @@ a second source beats it by 12–19% on every run.
   thread, with the GBM taking about 75% of that. Brute-force retrieval is fine up to about
   50k items. At 1M items, HNSW is 5× faster at 97.6% recall.
 
+## H&M: 105k articles, real purchases
+
+The same two-stage design on the H&M Kaggle data, with the competition's protocol: test is
+the last week (2020-09-16 to 22), validation the week before, and each stage sees a 12-week
+history window. Candidates are the union of four sources: two-tower top 100, EASE top 50,
+the customer's past purchases (re-buy) and last week's best-sellers, about 165 articles
+per user. Test results for the 49,219 test-week buyers with history, one seed:
+
+| System | MAP@12 | Recall@12 | NDCG@12 |
+|---|---|---|---|
+| Popularity (last week) | 0.0091 | 0.0255 | 0.0161 |
+| Re-buy, then popular | 0.0331 | 0.0634 | 0.0462 |
+| EASE (tuned) | 0.0148 | 0.0394 | 0.0247 |
+| Two-tower | 0.0069 | 0.0201 | 0.0125 |
+| GBM on two-tower candidates | 0.0171 | 0.0346 | 0.0257 |
+| **Two-stage (multi-source GBM, selected on validation)** | **0.0381** | **0.0780** | **0.0550** |
+
+- **The two-stage system beats re-buy-then-popular, the strongest baseline, by 15.0% on
+  MAP@12** [+12.6, +17.4], and EASE by 157%.
+- **Retrieval is the bottleneck.** The four-source union holds only 18.5% of what users
+  buy. Each source alone finds 5–9%, and they overlap little.
+- **The two-tower model earns its place as a candidate source, not as a feature.** Alone it
+  ranks below last-week popularity, but as a source its recall (7.7%) is close to EASE's
+  (8.5%). Its scores add nothing to the ranker (+1.1% [−0.3, +2.6] without them), and
+  validation chose the ranker without them.
+
+Full setup, validation numbers and caveats are in [`RESULTS.md` §7](RESULTS.md#7-hm-105k-articles-real-purchases).
+
 ## Architecture
 ```
                          ┌─ user tower · item tower ─ dot product ─ top-200 ─┐
@@ -92,7 +122,7 @@ grid, not at its edge.
 python -m venv .venv
 .venv/Scripts/pip install -r requirements.txt   # .venv/bin on macOS/Linux; torch CPU wheel: --index-url https://download.pytorch.org/whl/cpu
 
-.venv/Scripts/python -m pytest tests                          # 14 unit tests, about 5 s
+.venv/Scripts/python -m pytest tests                          # 17 unit tests, about 4 s
 .venv/Scripts/python run_pipeline.py                          # leave-last-5, seed 42 (about 15-20 min on CPU)
 .venv/Scripts/python run_pipeline.py --seed 43                # more seeds
 .venv/Scripts/python run_pipeline.py --protocol global        # global time split
@@ -109,6 +139,16 @@ Each run writes to `results/runs/<protocol>_minr<r>_seed<s>/`:
 
 The dataset downloads automatically. A full run peaks at a few GB of RAM.
 
+**H&M.** Download the Kaggle competition's `articles.csv`, `customers.csv` and
+`transactions_train.csv` into `~/data/hm`, or set `HM_DATA` to another directory. The
+first run compacts them into `hm_compact.npz`.
+```bash
+.venv/Scripts/python run_hm.py --smoke     # 4-week window, 1 epoch, 3,000 users: a few minutes
+.venv/Scripts/python run_hm.py             # full run, about 30 min on CPU
+.venv/Scripts/python run_hm.py --no-logq   # two-tower without the logQ correction
+```
+Results go to `results/hm/` (same files as above, with MAP@12).
+
 ## Layout
 ```
 recsys/data.py          load ML-1M, leave-last-k and global time-split protocols
@@ -118,7 +158,11 @@ recsys/features.py      FeatureStore: offline precompute, online transform
 recsys/ranker.py        LightGBM LambdaRank, validation-based variant selection
 recsys/baselines.py     Popularity, Item-kNN, EASE
 recsys/metrics.py       Recall@K, NDCG@K, paired bootstrap
-run_pipeline.py         end-to-end experiment
+recsys/hm_data.py       H&M loading, compaction, weekly stages
+recsys/hm_model.py      H&M two-tower towers (catalog attributes, no customer-ID embedding)
+recsys/hm_features.py   H&M candidate sources (two-tower, EASE, re-buy, popular) and ranker features
+run_pipeline.py         end-to-end experiment (MovieLens)
+run_hm.py               end-to-end experiment (H&M)
 scripts/                serving benchmark, report and figures
 tests/                  unit tests (metrics, split leakage, history gathering, baselines, features, candidate merge, reranking)
 RESULTS.md              full results, ablations, caveats
@@ -132,5 +176,6 @@ AB_TEST_PLAN.md         online experiment design
    6 ms scoring step. Also try scoring fewer candidates, such as the top 150 per source.
 3. **Scalable EASE:** sparsify B, or precompute EASE candidates offline, before moving to
    a catalog of 100k+ items.
-4. **H&M dataset** (about 105k articles, real purchases): repeat the study on a catalog
-   where ANN retrieval is needed.
+4. **H&M retrieval recall:** the four-source union finds only 18.5% of purchases. Extend
+   the EASE λ grid below 50 (the chosen value is at the edge), add more sources (items
+   bought together with recent purchases, trending items by age group), and run more seeds.

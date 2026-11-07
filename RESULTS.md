@@ -1,4 +1,7 @@
-# Offline Results: MovieLens-1M
+# Offline Results
+
+Sections 1–6 cover **MovieLens-1M**. Section 7 repeats the study on **H&M** (105k articles,
+real purchases).
 
 Every number on this page is a **test-set** number. All modelling decisions were made
 on validation before the test set was scored:
@@ -252,10 +255,114 @@ on a feature that is constant within each user overfit. The test-set comparison 
 reported only after that decision. The pipeline now enforces this rule for every ranker
 variant.
 
+## 7. H&M: 105k articles, real purchases
+
+Produced by `run_hm.py` (seed 42, about 29 minutes on CPU). Outputs are in `results/hm/`
+and the log is `results/logs/hm_full.log`.
+
+| | |
+|---|---|
+| Data | 31.8M purchases, 1.37M customers, 105,542 articles (2018-09 to 2020-09) |
+| Protocol | the Kaggle competition's. **Test** = the last week (2020-09-16 to 22), **validation** = the week before. Each stage sees a 12-week history window strictly before its target week. |
+| Evaluated users | customers who buy in the target week *and* have history in the window: 49,219 of 68,984 test-week buyers (71%), buying 3.1 items on average |
+| Metric | **MAP@12** (the competition metric), plus Recall@12 and NDCG@12 |
+| Seeds | 1 (42) |
+
+**Candidates.** Four sources, unioned per user (about 165 unique articles per user):
+
+- **Two-tower top 100.** It retrieves from the articles sold in the last 4 weeks. The user
+  tower has no customer-ID embedding (1.37M IDs, most with a handful of purchases); it uses
+  age, club status, newsletter frequency and the mean of the last 20 purchases. The item
+  tower has the article ID plus 8 catalog attributes. It's trained once with logQ
+  correction, for 3 epochs on the validation-stage history, and reused at test time with
+  user embeddings recomputed from the newer history.
+- **EASE top 50**, over the 8,000 best-selling articles of the last 4 weeks.
+- **Re-buy:** up to 30 articles the customer bought before.
+- **Popular:** last week's 30 best-sellers.
+
+**Decisions on validation.** EASE λ was picked on the validation week (λ = 50). Three
+LambdaRank variants were trained on 9,600 validation users, and the one with the best MAP@12
+on the other 2,400 (ranker-holdout) users was selected:
+
+| Variant (ranker-holdout users, validation week) | MAP@12 | Recall@12 | NDCG@12 | Trees |
+|---|---|---|---|---|
+| GBM on two-tower candidates | 0.0224 | 0.0459 | 0.0344 | 128 |
+| Multi-source GBM, all features | 0.0406 | 0.0841 | 0.0596 | 55 |
+| **Multi-source GBM w/o two-tower feats (selected)** | **0.0411** | 0.0840 | **0.0599** | 26 |
+
+**Test results (49,219 users):**
+
+| System | MAP@12 | Recall@12 | NDCG@12 |
+|---|---|---|---|
+| Popularity (last week) | 0.0091 | 0.0255 | 0.0161 |
+| Re-buy, then popular | 0.0331 | 0.0634 | 0.0462 |
+| EASE (λ = 50) | 0.0148 | 0.0394 | 0.0247 |
+| Two-tower (stage 1 only) | 0.0069 | 0.0201 | 0.0125 |
+| GBM on two-tower candidates | 0.0171 | 0.0346 | 0.0257 |
+| Multi-source GBM, all features | 0.0377 | 0.0776 | 0.0546 |
+| **Two-stage, selected: multi-source GBM w/o two-tower feats** | **0.0381** | **0.0780** | **0.0550** |
+
+Paired lift in MAP@12 for the selected system (bootstrap over users, 95% CI):
+
+| Selected two-stage vs… | MAP@12 lift | 95% CI |
+|---|---|---|
+| Re-buy, then popular | **+15.0%** | [+12.6, +17.4] |
+| EASE | +157.1% | [+144.6, +170.0] |
+| GBM on two-tower candidates | +123.4% | [+113.7, +134.0] |
+| Popularity (last week) | +318.8% | [+291.9, +350.0] |
+| Two-tower | +450.2% | [+413.9, +488.3] |
+| Multi-source GBM, all features | +1.1% | [−0.3, +2.6] |
+
+GBM on two-tower candidates vs two-tower alone: +146.3% [+131.1, +163.4].
+
+**Candidate recall on test** (share of a user's purchased articles that a source retrieves):
+
+| Source | Recall |
+|---|---|
+| Two-tower top 100 | 0.077 |
+| EASE top 50 | 0.085 |
+| Re-buy (≤ 30) | 0.053 |
+| Popular (30) | 0.052 |
+| **Union (about 165 per user)** | **0.185** |
+
+What this shows:
+
+- **The two-stage system beats the strongest simple baseline.** "Re-buy, then popular" is
+  the hard baseline on this data, and the multi-source GBM beats it by 15% on MAP@12. On
+  the smoke runs (4-week window, 1 epoch, 3,000 test users) this comparison was −3% to
+  −4% and not significant; on the full data it is clearly positive.
+- **Retrieval is the bottleneck.** The union holds only 18.5% of what users buy, so no
+  ranker on these candidates can exceed that recall. Each source on its own finds 5–9%, and
+  they overlap little.
+- **The two-tower model is a candidate source, not a ranking signal.** On its own it ranks
+  below last-week popularity (MAP@12 0.0069 vs 0.0091). As a source its recall (7.7%) is
+  close to EASE's (8.5%). As ranker features it adds nothing: with and without them the
+  multi-source GBM is within 1.1% [−0.3, +2.6], and validation preferred the version
+  without them.
+- **Candidates matter more than features here.** The GBM restricted to two-tower
+  candidates scores less than half the multi-source GBM. The opposite of MovieLens
+  leave-last-5, where EASE helped mostly as a feature.
+- **What the selected ranker uses.** Top features by gain: `i_department_no` 18.2%,
+  `ui_days_since` 13.8%, `u_product_code_cnt` 10.3%, `u_days_since_last` 8.0%,
+  `i_log_sales_1w` 7.9%, `ease_score` 5.4%. Recency and recent popularity dominate, as
+  is typical for fashion purchases.
+
+**H&M-specific caveats:**
+
+- **One seed.** The CIs cover variation across users, not across training runs.
+- **EASE λ = 50 is at the bottom edge of the grid** {50, 200, 800, 3200}; validation MAP@12
+  was still rising as λ fell (0.0145 → 0.0162). A lower λ might give a stronger EASE
+  baseline and better EASE candidates.
+- **29% of test-week buyers aren't scored**, because they have no purchase in the 12-week
+  window. They are cold-start users for every system here.
+- **logQ matters for the two-tower model.** On the smoke setting (3,000 test users),
+  training without the logQ correction cut its candidate recall from 0.089 to 0.010. That
+  comparison has not been repeated on the full run.
+
 ## Caveats
 
 - **Seeds.** Only the leave-last-5 protocol has 3 seeds; global and ratings ≥ 4 have one
-  each. The bootstrap CIs cover variation across users, not across runs.
+  each, as does H&M. The bootstrap CIs cover variation across users, not across runs.
 - **Ranker selection is noisy at the top.** On seed 42, the two best variants were 0.001
   apart on validation. The global split has only 104 ranker-holdout users.
 - **Labels.** "Rated it" is still not "clicked it when shown". There's no impression or
