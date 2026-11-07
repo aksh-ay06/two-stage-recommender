@@ -27,11 +27,17 @@ from recsys.metrics import evaluate, paired_bootstrap  # noqa: E402
 RUNS = ROOT / "results" / "runs"
 FIG = ROOT / "results" / "figures"
 MAIN_RUN = "last_k_minr1_seed42"
-TWO_STAGE = "Two-stage (GBM rerank)"
+TWO_STAGE = "Two-stage (selected)"
+PREV = "GBM on two-tower candidates"   # the single-source two-stage system, kept as a variant
 
-# Reference palette (light mode), categorical slots in fixed order + text/surface tokens.
+# Reference palette (light mode). Only the first three categorical slots (validated all-pairs)
+# plus a neutral gray, with one color per entity, the same in every figure.
 SURFACE, INK, INK2, GRID, MUTED = "#fcfcfb", "#0b0b0b", "#52514e", "#e4e3df", "#8f8e88"
-SERIES = {TWO_STAGE: "#2a78d6", "Two-tower": "#eb6834", "EASE": "#1baf7a", "Item-kNN": "#eda100", "Popularity": MUTED}
+BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"
+SERIES = {TWO_STAGE: BLUE, PREV: ORANGE, "EASE": AQUA, "Two-tower": MUTED}
+LEGEND = {TWO_STAGE: "Two-stage, ranker chosen on validation (uses EASE signal)",
+          PREV: "Two-tower candidates only + GBM", "EASE": "EASE (tuned)", "Two-tower": "Two-tower alone"}
+SHORT = {TWO_STAGE: "Two-stage", PREV: "Two-tower cands + GBM", "EASE": "EASE", "Two-tower": "Two-tower"}
 plt.rcParams.update({
     "figure.facecolor": SURFACE, "axes.facecolor": SURFACE, "savefig.facecolor": SURFACE,
     "axes.edgecolor": GRID, "axes.labelcolor": INK2, "xtick.color": INK2, "ytick.color": INK2,
@@ -50,10 +56,12 @@ def load_runs():
         m = json.load(open(f))
         metas[d.name] = m
         for system, metrics in m["test"].items():
-            name = TWO_STAGE if system == m["selected_ranker"] else system
-            for metric, v in metrics.items():
-                rows.append(dict(run=d.name, protocol=m["protocol"], min_rating=m["min_rating"], seed=m["seed"],
-                                 system=name, raw_system=system, metric=metric, value=v))
+            # every system keeps its own row; the validation-selected ranker is ALSO reported as TWO_STAGE
+            names = [system] + ([TWO_STAGE] if system == m["selected_ranker"] else [])
+            for name in names:
+                for metric, v in metrics.items():
+                    rows.append(dict(run=d.name, protocol=m["protocol"], min_rating=m["min_rating"], seed=m["seed"],
+                                     system=name, raw_system=system, metric=metric, value=v))
     return pd.DataFrame(rows), metas
 
 
@@ -65,15 +73,15 @@ def summarize(df: pd.DataFrame) -> pd.DataFrame:
 
 def fig_ndcg_curve(per_user, selected):
     ks = np.arange(1, 51)
-    systems = [TWO_STAGE, "Two-tower", "EASE", "Item-kNN", "Popularity"]
+    systems = [TWO_STAGE, PREV, "EASE", "Two-tower"] if selected != PREV else [TWO_STAGE, "EASE", "Two-tower"]
     raw = {TWO_STAGE: selected}
-    fig, ax = plt.subplots(figsize=(7.6, 4.4))
+    fig, ax = plt.subplots(figsize=(7.6, 4.6))
     ends = []
     for s in systems:
         ranked = per_user["ranked"][raw.get(s, s)]
         m = evaluate(ranked, per_user["targets"], ks=tuple(ks))
         y = np.array([m[f"NDCG@{k}"].mean() for k in ks])
-        ax.plot(ks, y, color=SERIES[s], lw=2.4 if s == TWO_STAGE else 2, label=s, solid_capstyle="round")
+        ax.plot(ks, y, color=SERIES[s], lw=2.4 if s == TWO_STAGE else 2, label=LEGEND[s], solid_capstyle="round")
         ends.append((y[-1], s))
     # direct labels at line ends, nudged apart so they never collide
     ends.sort()
@@ -81,17 +89,17 @@ def fig_ndcg_curve(per_user, selected):
     for y, s in ends:
         y_lab = max([y] + [p + 0.0065 for p in placed[-1:]])
         placed.append(y_lab)
-        ax.annotate("Two-stage" if s == TWO_STAGE else s, (50, y), xytext=(52, y_lab), textcoords="data", va="center", fontsize=9, color=INK2,
+        ax.annotate(SHORT[s], (50, y), xytext=(52, y_lab), textcoords="data", va="center", fontsize=9, color=INK2,
                     arrowprops=None, annotation_clip=False)
     ax.set_xlim(1, 50)
     ax.set_ylim(0, None)
     ax.set_xlabel("K (list length)")
     ax.set_ylabel("NDCG@K")
-    ax.set_title("NDCG@K on test, leave-last-5 protocol (seed 42)", loc="left", pad=30)
-    ax.legend(loc="lower left", bbox_to_anchor=(0, 1.0), ncols=5, fontsize=8.5, handlelength=1.4, columnspacing=1.0)
+    ax.set_title("NDCG@K on test, leave-last-5 protocol (seed 42)", loc="left", pad=40)
+    ax.legend(loc="lower left", bbox_to_anchor=(0, 1.0), ncols=2, fontsize=8.5, handlelength=1.4, columnspacing=1.0)
     ax.text(1.5, 0.004, "Dip at K < 5 is expected: ideal DCG keeps growing until K = 5 held-out items",
             fontsize=8, color=INK2, va="bottom")
-    fig.subplots_adjust(right=0.82, top=0.84)
+    fig.subplots_adjust(right=0.76, top=0.80)
     fig.savefig(FIG / "ndcg_at_k.png", dpi=160)
     plt.close(fig)
 
@@ -100,34 +108,34 @@ def segments(per_user, selected, seed=0):
     q = pd.qcut(per_user["hist_count"], 4, labels=False)
     edges = np.quantile(per_user["hist_count"], [0, .25, .5, .75, 1]).astype(int)
     labels = [f"Q{i + 1}\n{edges[i]}-{edges[i + 1]} ratings" for i in range(4)]
-    sys_map = {TWO_STAGE: selected, "Two-tower": "Two-tower", "EASE": "EASE"}
+    sys_map = {"Two-tower": "Two-tower", "EASE": "EASE", PREV: PREV, TWO_STAGE: selected}
     m = {s: evaluate(per_user["ranked"][r], per_user["targets"], ks=(10,))["NDCG@10"] for s, r in sys_map.items()}
     rows = []
     for i in range(4):
         mask = q == i
-        lift, ci = paired_bootstrap(m["Two-tower"][mask], m[TWO_STAGE][mask], seed=seed)
-        lift_e, ci_e = paired_bootstrap(m["EASE"][mask], m[TWO_STAGE][mask], seed=seed)
-        rows.append({"quartile": labels[i].replace("\n", " "), "users": int(mask.sum()),
-                     **{f"NDCG@10 {s}": m[s][mask].mean() for s in sys_map},
-                     "lift_vs_two_tower": lift, "lift_ci_lo": ci[0], "lift_ci_hi": ci[1],
-                     "lift_vs_EASE": lift_e, "lift_vs_EASE_ci_lo": ci_e[0], "lift_vs_EASE_ci_hi": ci_e[1]})
+        row = {"quartile": labels[i].replace("\n", " "), "users": int(mask.sum()),
+               **{f"NDCG@10 {s}": m[s][mask].mean() for s in sys_map}}
+        for base, tag in [("Two-tower", "two_tower"), ("EASE", "EASE"), (PREV, "prev_two_stage")]:
+            lift, ci = paired_bootstrap(m[base][mask], m[TWO_STAGE][mask], seed=seed)
+            row.update({f"lift_vs_{tag}": lift, f"lift_vs_{tag}_ci_lo": ci[0], f"lift_vs_{tag}_ci_hi": ci[1]})
+        rows.append(row)
     seg = pd.DataFrame(rows)
 
-    fig, ax = plt.subplots(figsize=(7.2, 4.0))
+    fig, ax = plt.subplots(figsize=(7.6, 4.3))
     x = np.arange(4)
-    w = 0.26
-    for j, s in enumerate(["Two-tower", "EASE", TWO_STAGE]):
+    w = 0.2
+    for j, s in enumerate(["Two-tower", "EASE", PREV, TWO_STAGE]):
         vals = seg[f"NDCG@10 {s}"].to_numpy()
-        bars = ax.bar(x + (j - 1) * (w + 0.02), vals, width=w, color=SERIES[s], label=s, zorder=3)
+        bars = ax.bar(x + (j - 1.5) * (w + 0.015), vals, width=w, color=SERIES[s], label=SHORT[s], zorder=3)
         if s == TWO_STAGE:
             for b, v in zip(bars, vals):
                 ax.text(b.get_x() + b.get_width() / 2, v + 0.003, f"{v:.3f}", ha="center", va="bottom", fontsize=8, color=INK2)
     ax.set_xticks(x, labels)
     ax.set_ylabel("NDCG@10")
     ax.set_title("NDCG@10 by user activity (history length quartile)", loc="left")
-    ax.legend(loc="upper left", fontsize=9, ncols=3)
+    ax.legend(loc="upper right", fontsize=9, ncols=2)
     ax.grid(axis="x", visible=False)
-    ax.set_ylim(0, seg[[f"NDCG@10 {s}" for s in sys_map]].to_numpy().max() * 1.25)
+    ax.set_ylim(0, seg[[f"NDCG@10 {s}" for s in sys_map]].to_numpy().max() * 1.3)
     fig.tight_layout()
     fig.savefig(FIG / "ndcg_by_activity.png", dpi=160)
     plt.close(fig)
@@ -144,8 +152,8 @@ def fig_retrieval_scaling():
     h = [min(r["hnsw"], key=lambda e: abs(e["recall@200"] - 0.95) if e["recall@200"] >= 0.95 else 9 + e["efSearch"]) for r in b]
     hnsw = np.array([e["p50"] for e in h])
     fig, ax = plt.subplots(figsize=(6.4, 3.8))
-    ax.plot(n, exact, color=SERIES["Two-tower"], lw=2, marker="o", ms=8, label="Exact (brute force)")
-    ax.plot(n, hnsw, color=SERIES[TWO_STAGE], lw=2, marker="o", ms=8, label="FAISS HNSW (recall@200 >= 0.95)")
+    ax.plot(n, exact, color=ORANGE, lw=2, marker="o", ms=8, label="Exact (brute force)")
+    ax.plot(n, hnsw, color=BLUE, lw=2, marker="o", ms=8, label="FAISS HNSW (recall@200 >= 0.95)")
     for xi, yi, e in zip(n, hnsw, h):
         ax.annotate(f"R={e['recall@200']:.2f}", (xi, yi), xytext=(0, -16), textcoords="offset points",
                     ha="center", fontsize=8, color=INK2)

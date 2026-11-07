@@ -3,7 +3,7 @@
     python scripts/benchmark_serving.py --run last_k_minr1_seed42
 
 Part A (real model, ML-1M): one request = one user, single-threaded, measured step by step:
-    user tower -> retrieve top-200 (exact) -> feature transform -> GBM score -> sort
+    user tower -> retrieve top-200 from two-tower AND EASE, union -> feature transform -> GBM -> sort
     Per-user / per-item statistics are precomputed offline (FeatureStore), as in a feature store.
 
 Part B (retrieval at scale): catalogs of 3.7k (real), 100k and 1M items. The synthetic items
@@ -32,6 +32,7 @@ import torch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+from recsys.baselines import binary_matrix, ease_weights  # noqa: E402
 from recsys.data import load_ml1m, make_splits  # noqa: E402
 from recsys.features import FeatureStore  # noqa: E402
 from recsys.two_tower import HistoryIndex, TwoTower, TwoTowerConfig, embed_all  # noqa: E402
@@ -51,43 +52,63 @@ def part_a(run: str, n_requests: int, k: int):
     sp = make_splits(ds, meta["protocol"], min_rating=meta["min_rating"])
     cfg = TwoTowerConfig(**meta["two_tower_config"])
     model = TwoTower(ds, cfg)
-    weights = ROOT / "cache" / f"{run}_e{cfg.epochs}_c{k}.tt_test.pt"
-    model.load_state_dict(torch.load(weights))
+    model.load_state_dict(torch.load(ROOT / "cache" / f"{run}_e{cfg.epochs}.tt_test.pt"))
     model.eval()
     booster = lgb.Booster(model_file=str(ROOT / "results" / "runs" / run / "ranker.txt"))
+    names = booster.feature_name()
+    multi = meta.get("selected_pool") == "all"
 
     # ---- offline batch jobs (timed once, not per request)
     t = time.perf_counter()
     hidx = HistoryIndex(sp.train_val, model.pad, cfg.hist_len)
     _, V = embed_all(model, hidx, ds.n_users, ds.n_items)
     store = FeatureStore(ds, sp.train_val, V)
+    B = ease_weights(binary_matrix(sp.train_val, ds.n_users, ds.n_items), meta["baseline_params"]["EASE"])
     seen = sp.train_val.groupby("user").item.apply(np.array).to_dict()
     offline_s = time.perf_counter() - t
+
+    def top_sorted(s):
+        top = np.argpartition(-s, k)[:k]
+        return top[np.argsort(-s[top])]
 
     users = np.random.default_rng(0).choice(np.sort(sp.test.user.unique()), size=n_requests)
     start_of = dict(zip(hidx.user_ids, hidx.user_first))
     end_of = dict(zip(hidx.user_ids, hidx.user_end))
-    names = booster.feature_name()
     steps = {s: [] for s in ["user_tower", "retrieval", "features", "gbm", "total"]}
+    n_cands = []
     with torch.no_grad():
         for i, u in enumerate(users):
             t0 = time.perf_counter()
             hist = hidx.gather(torch.tensor([end_of[u]]), torch.tensor([start_of[u]]))
             q = model.user_vec(torch.tensor([u]), hist).numpy()[0]
             t1 = time.perf_counter()
-            s = V @ q
-            s[seen[u]] = -np.inf
-            top = np.argpartition(-s, k)[:k]
+            s_tt = V @ q
+            s_tt[seen[u]] = -np.inf
+            tt_top = top_sorted(s_tt)
+            r_tt = np.full(ds.n_items, k, np.float32)
+            r_tt[tt_top] = np.arange(k)
+            s_e = B[seen[u]].sum(0)             # EASE: sum of B rows for the user's items
+            s_e[seen[u]] = -np.inf
+            r_e = np.full(ds.n_items, k, np.float32)
+            if multi:
+                e_top = top_sorted(s_e)
+                r_e[e_top] = np.arange(k)
+                items = np.union1d(tt_top, e_top)
+            else:
+                items = tt_top
             t2 = time.perf_counter()
-            feats = store.transform(np.array([u]), top[None, :], s[top][None, :])
+            feats = store.transform(np.full(len(items), u), items, {
+                "tt_score": s_tt[items], "tt_rank": r_tt[items], "ease_score": s_e[items], "ease_rank": r_e[items]})
             t3 = time.perf_counter()
             scores = booster.predict(feats[names].to_numpy(np.float64), num_threads=1)
-            ranked = top[np.argsort(-scores)]  # noqa: F841
+            ranked = items[np.argsort(-scores)]  # noqa: F841
             t4 = time.perf_counter()
             if i >= 20:  # warm-up
+                n_cands.append(len(items))
                 for name, dt in zip(steps, [t1 - t0, t2 - t1, t3 - t2, t4 - t3, t4 - t0]):
                     steps[name].append(dt * 1000)
-    return {"offline_batch_sec": offline_s, "n_trees": booster.num_trees(), "candidates": k,
+    return {"ranker": meta["selected_ranker"], "multi_source": multi, "offline_batch_sec": offline_s,
+            "n_trees": booster.num_trees(), "candidates_per_source": k, "mean_candidates": float(np.mean(n_cands)),
             "latency_ms": {s: pct(v) for s, v in steps.items()}}, model, hidx, V, ds
 
 
@@ -139,20 +160,26 @@ def main():
     ap.add_argument("--requests", type=int, default=1000)
     ap.add_argument("--queries", type=int, default=500)
     ap.add_argument("--sizes", type=int, nargs="+", default=[3706, 100_000, 1_000_000])
+    ap.add_argument("--skip-scale", action="store_true", help="keep Part B from the existing results file")
     args = ap.parse_args()
 
     print("== Part A: per-request latency, single thread ==")
     a, model, hidx, V, ds = part_a(args.run, args.requests, 200)
     for s, v in a["latency_ms"].items():
         print(f"  {s:11s} p50={v['p50']:.2f}ms  p95={v['p95']:.2f}ms  p99={v['p99']:.2f}ms")
-    print(f"  offline batch (history index + item embeddings + feature store): {a['offline_batch_sec']:.1f}s")
-
-    print("\n== Part B: retrieval at scale (exact vs FAISS HNSW, top-200, single-thread queries) ==")
-    U, _ = embed_all(model, hidx, ds.n_users, ds.n_items)
-    U = U[np.abs(U).sum(1) > 0]
-    b = part_b(U, V, args.sizes, 200, args.queries)
+    print(f"  offline batch (history index + item embeddings + feature store + EASE B): {a['offline_batch_sec']:.1f}s")
+    print(f"  ranker={a['ranker']}  trees={a['n_trees']}  mean candidates/request={a['mean_candidates']:.0f}")
 
     out = ROOT / "results" / "serving_benchmark.json"
+    if args.skip_scale and out.exists():
+        b = json.load(open(out))["part_b"]
+        print("\n(Part B kept from the previous run)")
+    else:
+        print("\n== Part B: retrieval at scale (exact vs FAISS HNSW, top-200, single-thread queries) ==")
+        U, _ = embed_all(model, hidx, ds.n_users, ds.n_items)
+        U = U[np.abs(U).sum(1) > 0]
+        b = part_b(U, V, args.sizes, 200, args.queries)
+
     json.dump({"run": args.run, "part_a": a, "part_b": b}, open(out, "w"), indent=2)
     print(f"\nSaved {out}")
 
