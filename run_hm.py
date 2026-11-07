@@ -3,16 +3,21 @@
     python run_hm.py                    # full run (see RESULTS.md, section 7)
     python run_hm.py --smoke            # small, fast end-to-end check
 
-Protocol: the competition's. Test = the last week of the data (2020-09-16..22), validation
-= the week before. Each stage sees only a history window of ``--weeks`` weeks strictly before
-its target week. Evaluated users are customers who buy in the target week and have history
-in the window. Metric: MAP@12 (the Kaggle metric), plus Recall@12 and NDCG@12.
+Protocol: weekly, like the competition's. Test = the last week of the data (2020-09-16..22),
+validation = the week before, and ``--train-weeks - 1`` earlier weeks add ranker training data.
+Each stage sees only a history window of ``--weeks`` weeks strictly before its target week.
+Evaluated users are customers who buy in the target week and have history in the window, so
+the scores are NOT comparable to the Kaggle leaderboard (which scored all buyers of a later,
+hidden week). Metric: MAP@12 (the Kaggle definition), plus Recall@12 and NDCG@12.
+
+Every stage is built from its own history only: its own two-tower model (trained on that
+stage's history), EASE, feature store and candidates. So no target week is ever a training
+target for the stage-1 models that produce its features, and the test stage gets a model
+as fresh as the validation stage's.
 
 Every modelling decision (EASE λ, which ranker variant, early stopping) uses the validation
-week. The two-tower model is trained once, on the validation-stage history (everything before
-the validation week), and reused for the test stage. At test time its user embeddings are
-recomputed from histories that include the validation week, as they would be in production.
-Neither target week is ever used as a training target for stage 1.
+week. The rankers train on the earlier weeks' users plus 80% of the validation users; the
+other 20% (ranker-holdout users) drive early stopping and the choice of variant.
 """
 from __future__ import annotations
 
@@ -36,6 +41,7 @@ from recsys.two_tower import HistoryIndex, TwoTowerConfig, train_two_tower
 
 ROOT = Path(__file__).resolve().parent
 K = 12
+LAST_DAY = 733  # 2020-09-22, the last day in transactions_train.csv (days since hm_data.DAY0)
 VARIANTS = {  # name -> (candidate pool, features dropped)
     "GBM on two-tower candidates": ("tt", OTHER_SOURCE_FEATURES),
     "Multi-source GBM (all features)": ("all", ()),
@@ -105,6 +111,9 @@ def main():
     ap.add_argument("--epochs", type=int, default=3)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--val-users", type=int, default=12000, help="validation users sampled for ranker training")
+    ap.add_argument("--train-weeks", type=int, default=3,
+                    help="target weeks the rankers train on: the validation week plus this many minus one earlier weeks")
+    ap.add_argument("--week-users", type=int, default=20000, help="users sampled from each earlier training week")
     ap.add_argument("--test-users", type=int, default=0, help="0 = every evaluated test user")
     ap.add_argument("--chunk", type=int, default=4000)
     ap.add_argument("--tt-k", type=int, default=100)
@@ -118,6 +127,7 @@ def main():
     args = ap.parse_args()
     if args.smoke:
         args.weeks, args.epochs, args.val_users, args.test_users, args.ease_items = 4, 1, 3000, 3000, 2000
+        args.train_weeks, args.week_users = 2, 3000
         args.out = "results/hm_smoke" + ("_nologq" if args.no_logq else "")
     out = ROOT / args.out
     out.mkdir(parents=True, exist_ok=True)
@@ -125,37 +135,44 @@ def main():
     rng = np.random.default_rng(args.seed)
 
     # ---------------------------------------------------------------- data
-    from_day = 733 - 6 - 7 - 7 * args.weeks
-    d = load_hm(from_day=from_day)
-    test_start = d.last_day - 6
+    test_start = LAST_DAY - 6
     val_start = test_start - 7
+    extra_starts = [val_start - 7 * j for j in range(1, args.train_weeks)]  # earlier ranker-training weeks
+    d = load_hm(from_day=min([val_start, *extra_starts]) - 7 * args.weeks)
+    assert d.last_day == LAST_DAY, d.last_day
     val = make_stage(d, val_start, args.weeks, "val")
     test = make_stage(d, test_start, args.weeks, "test")
+    extra = [make_stage(d, s, args.weeks, f"train-{j}") for j, s in enumerate(extra_starts, 1)]
     d.tx = None
     gc.collect()
-    for st in (val, test):
+    for st in (*extra, val, test):
         print(f"{st.name}: history {len(st.hist):,} purchases, {st.hist.user.nunique():,} customers | "
               f"target week buyers {st.n_buyers:,}, evaluated (have history) {len(st.users):,} "
               f"({len(st.users) / st.n_buyers:.0%}), mean items bought {np.mean([len(t) for t in st.targets]):.1f}")
 
-    # ---------------------------------------------------------------- stage 1: two-tower
+    # ---------------------------------------------------------------- stage 1: one two-tower per stage
     cfg = TwoTowerConfig(dim=64, hist_len=20, epochs=args.epochs, batch_size=4096, lr=2e-3, seed=args.seed,
                          logq=not args.no_logq)
-    cache = ROOT / "cache" / f"hm_tt_w{args.weeks}_e{args.epochs}_s{args.seed}{'_nologq' if args.no_logq else ''}.pt"
-    model = HMTwoTower(d, cfg)
-    if cache.exists():
-        model.load_state_dict(torch.load(cache))
-        model.eval()
-        print(f"loaded two-tower weights {cache.name}")
-    else:
-        print("== two-tower training on the validation-stage history ==")
-        model, _ = train_two_tower(d, val.hist, cfg, model=model)
-        cache.parent.mkdir(exist_ok=True)
-        torch.save(model.state_dict(), cache)
-    V = item_vectors(model, d.n_items)
+
+    def two_tower(st):
+        """The stage's own model, trained on that stage's history only (cached by its start day)."""
+        tag = "_nologq" if args.no_logq else ""
+        cache = ROOT / "cache" / f"hm_tt_w{args.weeks}_e{args.epochs}_s{args.seed}{tag}_day{st.start}.pt"
+        model = HMTwoTower(d, cfg)
+        if cache.exists():
+            model.load_state_dict(torch.load(cache))
+            model.eval()
+            print(f"  loaded two-tower weights {cache.name}")
+        else:
+            print(f"== two-tower training on the {st.name}-stage history ==")
+            model, _ = train_two_tower(d, st.hist, cfg, model=model)
+            cache.parent.mkdir(exist_ok=True)
+            torch.save(model.state_dict(), cache)
+        return model, item_vectors(model, d.n_items)
 
     # ---------------------------------------------------------------- VAL stage
     print("== VAL stage ==")
+    model, V = two_tower(val)
     vr = StageRunner(d, val, model, cfg, V, args.ease_items, None, args)
     val_users = np.sort(rng.choice(val.users, size=min(args.val_users, len(val.users)), replace=False))
     tune_users = val_users[: min(4000, len(val_users))]
@@ -169,17 +186,45 @@ def main():
     vr.ease.fit(lam)
     print(f"  EASE lambda on val (MAP@12): {ease_scores} -> {lam}")
 
-    parts, val_lists = [], []
+    parts, val_pos = [], []
     for us, tg, feats, lists, Se in vr.chunks(val_users):
         parts.append(feats)
+        val_pos.append(feats.user.to_numpy()[feats.label.to_numpy() > 0])
         print(f"  val chunk: {len(us):,} users, {len(feats):,} candidate rows, pos rate {feats.label.mean():.4f}")
+    tr_users, hold_users = split_ranker_users(val_users, 0.2, args.seed)
+    hold_tg = [vr.tgt[u] for u in hold_users.tolist()]
+    del vr, model, V
+    gc.collect()
+
+    # Earlier weeks: ranker-training rows only. Each week is built from its own history and its own
+    # two-tower model. Users without a positive candidate give LambdaRank no gradient, so they're
+    # dropped here, and each week's customers get their own ids (user + j * n_users) so that one
+    # customer in two weeks forms two separate query groups.
+    # ranker-training users that have a positive candidate, per week
+    train_counts = {"val": int(np.isin(tr_users, np.concatenate(val_pos)).sum())}
+    for j, st in enumerate(extra, 1):
+        print(f"== ranker-training week {st.name} (target week starts day {st.start}) ==")
+        m_j, V_j = two_tower(st)
+        runner = StageRunner(d, st, m_j, cfg, V_j, args.ease_items, lam, args)
+        users = np.sort(rng.choice(st.users, size=min(args.week_users, len(st.users)), replace=False))
+        week_ids = []
+        for us, tg, f, lists, Se in runner.chunks(users):
+            f = f[(f.groupby("user").label.transform("max") > 0).to_numpy()].copy()
+            f["user"] = f.user.to_numpy(np.int64) + j * d.n_users
+            week_ids.append(f.user.unique())
+            parts.append(f)
+            print(f"  {st.name} chunk: {len(us):,} users, {len(week_ids[-1]):,} with a positive, {len(f):,} rows kept")
+        week_ids = np.concatenate(week_ids)
+        tr_users = np.concatenate([tr_users, week_ids])
+        train_counts[st.name] = int(len(week_ids))
+        del runner, m_j, V_j
+        gc.collect()
+
     feats = pd.concat(parts, ignore_index=True)
     del parts
     gc.collect()
-    tr_users, hold_users = split_ranker_users(val_users, 0.2, args.seed)
     rankers, val_table = {}, {}
     hold = feats[feats.user.isin(hold_users)]
-    hold_tg = [vr.tgt[u] for u in hold_users.tolist()]
     for name, (pool, drop) in VARIANTS.items():
         df = feats if pool == "all" else feats[feats.tt_rank < args.tt_k]
         rankers[name] = train_ranker(df, tr_users, hold_users, drop=drop, seed=args.seed,
@@ -191,11 +236,12 @@ def main():
     selected = max(val_table, key=lambda n: val_table[n][f"MAP@{K}"])
     print(pd.DataFrame(val_table).T.round(4).to_string())
     print(f"VAL (ranker-holdout users, n={len(hold_users):,}) -> selected ranker: {selected}")
-    del feats, hold, vr
+    del feats, hold
     gc.collect()
 
     # ---------------------------------------------------------------- TEST stage
     print("== TEST stage ==")
+    model, V = two_tower(test)
     tr = StageRunner(d, test, model, cfg, V, args.ease_items, lam, args)
     test_users = test.users
     if args.test_users:
@@ -245,10 +291,11 @@ def main():
         lambda s: s / s.sum()).sort_values(ascending=False).rename("gain_share").to_csv(out / "feature_importance.csv")
     best.booster_.save_model(str(out / "ranker.txt"), num_iteration=best.best_iteration_)
     json.dump({
-        "protocol": "H&M weekly: test = 2020-09-16..22, val = week before",
+        "protocol": "H&M weekly: test = 2020-09-16..22, val = week before, rankers also trained on "
+                    f"{args.train_weeks - 1} earlier week(s); one two-tower model per stage",
         "args": vars(args), "two_tower_config": cfg.__dict__, "ease_lambda": lam, "ease_tuning_map12": ease_scores,
         "n_test_users": len(all_targets), "test_buyers_total": test.n_buyers, "n_val_users": int(len(val_users)),
-        "n_val_holdout_users": int(len(hold_users)), "selected_ranker": selected, "val_holdout": val_table,
+        "n_val_holdout_users": int(len(hold_users)), "ranker_train_users_per_week": train_counts, "selected_ranker": selected, "val_holdout": val_table,
         "ranker_best_iterations": {n: int(r.best_iteration_) for n, r in rankers.items()},
         "test": table.to_dict(orient="index"), "candidate_recall": cand_recall, "comparisons": comparisons,
         "runtime_sec": time.time() - t_start,

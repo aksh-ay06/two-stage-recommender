@@ -1,10 +1,12 @@
 {
-  "protocol": "H&M weekly: test = 2020-09-16..22, val = week before",
+  "protocol": "H&M weekly: test = 2020-09-16..22, val = week before, rankers also trained on 1 earlier week(s); one two-tower model per stage",
   "args": {
     "weeks": 4,
     "epochs": 1,
     "seed": 42,
     "val_users": 3000,
+    "train_weeks": 2,
+    "week_users": 3000,
     "test_users": 3000,
     "chunk": 4000,
     "tt_k": 100,
@@ -12,6 +14,7 @@
     "ease_items": 2000,
     "rebuy_k": 30,
     "pop_k": 30,
+    "no_logq": false,
     "smoke": true,
     "out": "results/hm_smoke"
   },
@@ -24,10 +27,15 @@
     "weight_decay": 1e-06,
     "temperature": 0.05,
     "dropout": 0.1,
-    "seed": 42
+    "seed": 42,
+    "logq": true
   },
-  "ease_lambda": 50,
+  "ease_lambda": 0.2,
   "ease_tuning_map12": {
+    "0.2": 0.02079278230147278,
+    "0.8": 0.020759382830573304,
+    "3": 0.02073989930483978,
+    "12": 0.020735744462768272,
     "50": 0.02052409188254426,
     "200": 0.020311873334631268,
     "800": 0.019690470292494103,
@@ -37,124 +45,128 @@
   "test_buyers_total": 68984,
   "n_val_users": 3000,
   "n_val_holdout_users": 600,
-  "selected_ranker": "Multi-source GBM (all features)",
+  "ranker_train_users_per_week": {
+    "val": 922,
+    "train-1": 1104
+  },
+  "selected_ranker": "Multi-source GBM w/o two-tower feats",
   "val_holdout": {
     "GBM on two-tower candidates": {
-      "MAP@12": 0.02182651214526215,
-      "Recall@12": 0.04116943935693935,
-      "NDCG@12": 0.03222079984985186
+      "MAP@12": 0.021500572524183633,
+      "Recall@12": 0.04637289939592571,
+      "NDCG@12": 0.03320483531738204
     },
     "Multi-source GBM (all features)": {
-      "MAP@12": 0.06170321769280103,
-      "Recall@12": 0.10581401006401006,
-      "NDCG@12": 0.08185832384579321
+      "MAP@12": 0.0609504018358185,
+      "Recall@12": 0.11045885133385132,
+      "NDCG@12": 0.08244573352859601
     },
     "Multi-source GBM w/o two-tower feats": {
-      "MAP@12": 0.0592831512880124,
-      "Recall@12": 0.10621116614866614,
-      "NDCG@12": 0.07974144817822916
+      "MAP@12": 0.06567016394099727,
+      "Recall@12": 0.11762849419099419,
+      "NDCG@12": 0.08791469595208698
     }
   },
   "ranker_best_iterations": {
-    "GBM on two-tower candidates": 34,
-    "Multi-source GBM (all features)": 31,
-    "Multi-source GBM w/o two-tower feats": 9
+    "GBM on two-tower candidates": 26,
+    "Multi-source GBM (all features)": 14,
+    "Multi-source GBM w/o two-tower feats": 40
   },
   "test": {
     "Popularity (last week)": {
-      "MAP@12": 0.009089026303716058,
-      "Recall@12": 0.02500003019855961,
-      "NDCG@12": 0.01588484521853929
+      "MAP@12": 0.010532774738121961,
+      "Recall@12": 0.02690870160541213,
+      "NDCG@12": 0.017980655265680077
     },
     "Re-buy, then popular": {
-      "MAP@12": 0.04925256811310383,
-      "Recall@12": 0.08778229713756029,
-      "NDCG@12": 0.06649759584583867
+      "MAP@12": 0.047919587742504405,
+      "Recall@12": 0.08729847379429422,
+      "NDCG@12": 0.06677994578539662
     },
     "EASE": {
-      "MAP@12": 0.02174342208937447,
-      "Recall@12": 0.057047178357704675,
-      "NDCG@12": 0.036611485222505055
+      "MAP@12": 0.02254122704749689,
+      "Recall@12": 0.05342748445511603,
+      "NDCG@12": 0.03591381245971158
     },
     "Two-tower": {
-      "MAP@12": 0.006200394821228154,
-      "Recall@12": 0.020013808841943516,
-      "NDCG@12": 0.011574153790492559
+      "MAP@12": 0.005791825597242263,
+      "Recall@12": 0.018674514374514374,
+      "NDCG@12": 0.011225199705857235
     },
     "GBM on two-tower candidates": {
-      "MAP@12": 0.015551443402276736,
-      "Recall@12": 0.03046921453303032,
-      "NDCG@12": 0.02344884271224252
+      "MAP@12": 0.015726855058521727,
+      "Recall@12": 0.032978586642402434,
+      "NDCG@12": 0.024689315337241922
     },
     "Multi-source GBM (all features)": {
-      "MAP@12": 0.047401807842129814,
-      "Recall@12": 0.09442111800451584,
-      "NDCG@12": 0.06739139451827542
+      "MAP@12": 0.04834279050945447,
+      "Recall@12": 0.09914463335368907,
+      "NDCG@12": 0.06983128714971931
     },
     "Multi-source GBM w/o two-tower feats": {
-      "MAP@12": 0.04616856577004846,
-      "Recall@12": 0.09081194977050241,
-      "NDCG@12": 0.06535619586940712
+      "MAP@12": 0.050540190820716605,
+      "Recall@12": 0.10164842186537233,
+      "NDCG@12": 0.07255571097129808
     }
   },
   "candidate_recall": {
-    "two-tower": 0.08879002206287487,
-    "EASE": 0.10442162734925893,
-    "re-buy": 0.07216355067934015,
-    "popular": 0.05045850885870235,
-    "union": 0.22182175916535496,
-    "candidates_per_user": 153.84233333333333
+    "two-tower": 0.09451135325130143,
+    "EASE": 0.09982111804604064,
+    "re-buy": 0.07180923509182023,
+    "popular": 0.05093080954133586,
+    "union": 0.21629753456941,
+    "candidates_per_user": 149.042
   },
   "comparisons": {
-    "Multi-source GBM (all features) vs Two-tower": {
-      "lift": 6.644966039878832,
+    "Multi-source GBM w/o two-tower feats vs Two-tower": {
+      "lift": 7.72612442694769,
       "ci95": [
-        4.627080800690721,
-        9.678845225636937
+        5.675095116813964,
+        10.61132812228818
       ]
     },
-    "Multi-source GBM (all features) vs Re-buy, then popular": {
-      "lift": -0.03757692932323686,
+    "Multi-source GBM w/o two-tower feats vs Re-buy, then popular": {
+      "lift": 0.054687513012298794,
       "ci95": [
-        -0.10173011052527917,
-        0.030301987264574146
+        -0.014333658205658288,
+        0.12700846907148847
       ]
     },
-    "Multi-source GBM (all features) vs EASE": {
-      "lift": 1.1800527831952463,
+    "Multi-source GBM w/o two-tower feats vs EASE": {
+      "lift": 1.242122432564242,
       "ci95": [
-        0.8661461244273447,
-        1.559709207425714
+        0.896037998025475,
+        1.6933796440674493
       ]
     },
-    "Multi-source GBM (all features) vs Popularity (last week)": {
-      "lift": 4.215278981286427,
+    "Multi-source GBM w/o two-tower feats vs Popularity (last week)": {
+      "lift": 3.7983738451932503,
       "ci95": [
-        3.0215793999718232,
-        6.125061015930409
+        2.6978294515666854,
+        5.458185430781635
       ]
     },
-    "Multi-source GBM (all features) vs GBM on two-tower candidates": {
-      "lift": 2.048064839768518,
+    "Multi-source GBM w/o two-tower feats vs GBM on two-tower candidates": {
+      "lift": 2.2136234887808026,
       "ci95": [
-        1.517150947822074,
-        2.7420935305969563
+        1.6252270322686821,
+        2.9643884079724114
       ]
     },
-    "Multi-source GBM (all features) vs Multi-source GBM w/o two-tower feats": {
-      "lift": 0.02671172585745385,
+    "Multi-source GBM w/o two-tower feats vs Multi-source GBM (all features)": {
+      "lift": 0.04545456081672383,
       "ci95": [
-        -0.03380907887267685,
-        0.08630013246740717
+        -0.005693335224727597,
+        0.09991586910262955
       ]
     },
     "GBM on two-tower candidates vs Two-tower": {
-      "lift": 1.5081376026303368,
+      "lift": 1.715353698842375,
       "ci95": [
-        0.855760312904136,
-        2.4468583903736487
+        1.0537981501850513,
+        2.653066833815558
       ]
     }
   },
-  "runtime_sec": 23.0591037273407
+  "runtime_sec": 262.1099019050598
 }

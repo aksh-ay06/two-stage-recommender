@@ -25,7 +25,8 @@ Arm B separates them:
 - **B vs A** measures the reranker alone.
 - **C vs B** measures what the second source adds.
 
-Offline, C − B is about a third of C − A, so C vs B is diagnostic. It isn't powered as a
+Offline, C − B is about 40% of C − A (0.019 of 0.045 NDCG@10, leave-last-5 mean over 3
+seeds), so C vs B is diagnostic. It isn't powered as a
 decision on its own. If traffic is too tight for three arms, run A vs C and use
 interleaving (section 9) to compare B with C.
 

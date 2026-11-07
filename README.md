@@ -52,29 +52,36 @@ a second source beats it by 12–19% on every run.
 
 ## H&M: 105k articles, real purchases
 
-The same two-stage design on the H&M Kaggle data, with the competition's protocol: test is
-the last week (2020-09-16 to 22), validation the week before, and each stage sees a 12-week
-history window. Candidates are the union of four sources: two-tower top 100, EASE top 50,
-the customer's past purchases (re-buy) and last week's best-sellers, about 165 articles
-per user. Test results for the 49,219 test-week buyers with history, one seed:
+The same two-stage design on the H&M Kaggle data, with weekly stages like the competition:
+test is the last week (2020-09-16 to 22), validation the week before, and the rankers also
+train on the two weeks before that. Each stage sees a 12-week history window and gets its
+own two-tower model, trained on that history only. Candidates are the union of four
+sources: two-tower top 100, EASE top 50, the customer's past purchases (re-buy) and last
+week's best-sellers, about 163 articles per user. Test results for the 49,219 test-week
+buyers with history, one seed:
 
 | System | MAP@12 | Recall@12 | NDCG@12 |
 |---|---|---|---|
 | Popularity (last week) | 0.0091 | 0.0255 | 0.0161 |
 | Re-buy, then popular | 0.0331 | 0.0634 | 0.0462 |
 | EASE (tuned) | 0.0148 | 0.0394 | 0.0247 |
-| Two-tower | 0.0069 | 0.0201 | 0.0125 |
-| GBM on two-tower candidates | 0.0171 | 0.0346 | 0.0257 |
-| **Two-stage (multi-source GBM, selected on validation)** | **0.0381** | **0.0780** | **0.0550** |
+| Two-tower | 0.0076 | 0.0229 | 0.0140 |
+| GBM on two-tower candidates | 0.0207 | 0.0419 | 0.0310 |
+| **Two-stage (multi-source GBM, selected on validation)** | **0.0404** | **0.0817** | **0.0581** |
 
-- **The two-stage system beats re-buy-then-popular, the strongest baseline, by 15.0% on
-  MAP@12** [+12.6, +17.4], and EASE by 157%.
-- **Retrieval is the bottleneck.** The four-source union holds only 18.5% of what users
+These scores aren't comparable to the Kaggle leaderboard, which scored a later week and
+every buyer, including those with no history.
+
+- **The two-stage system beats re-buy-then-popular, the strongest baseline, by 21.8% on
+  MAP@12** [+19.5, +24.3], and EASE by 172%.
+- **Ranker training data mattered more than any model change.** Training the rankers on
+  three weeks instead of one raised MAP@12 by about 7%. Giving the test stage its own
+  two-tower model improved the two-tower but not the final system.
+- **Retrieval is the bottleneck.** The four-source union holds only 19.0% of what users
   buy. Each source alone finds 5–9%, and they overlap little.
 - **The two-tower model earns its place as a candidate source, not as a feature.** Alone it
-  ranks below last-week popularity, but as a source its recall (7.7%) is close to EASE's
-  (8.5%). Its scores add nothing to the ranker (+1.1% [−0.3, +2.6] without them), and
-  validation chose the ranker without them.
+  ranks below last-week popularity, but as a source it has the highest recall of the four
+  (9.3%). Its scores add nothing to the ranker (−0.5% [−1.7, +0.6] without them).
 
 Full setup, validation numbers and caveats are in [`RESULTS.md` §7](RESULTS.md#7-hm-105k-articles-real-purchases).
 
@@ -143,11 +150,13 @@ The dataset downloads automatically. A full run peaks at a few GB of RAM.
 `transactions_train.csv` into `~/data/hm`, or set `HM_DATA` to another directory. The
 first run compacts them into `hm_compact.npz`.
 ```bash
-.venv/Scripts/python run_hm.py --smoke     # 4-week window, 1 epoch, 3,000 users: a few minutes
-.venv/Scripts/python run_hm.py             # full run, about 30 min on CPU
-.venv/Scripts/python run_hm.py --no-logq   # two-tower without the logQ correction
+.venv/Scripts/python run_hm.py --smoke            # 4-week window, 1 epoch, 2 training weeks, 3,000 users: about 5 min
+.venv/Scripts/python run_hm.py                    # full run: 3 training weeks, about 90 min on CPU the first time
+.venv/Scripts/python run_hm.py --smoke --no-logq  # two-tower without the logQ correction
+.venv/Scripts/python run_hm.py --train-weeks 1    # rankers trained on the validation week only
 ```
-Results go to `results/hm/` (same files as above, with MAP@12).
+Results go to `results/hm/` (same files as above, with MAP@12). Each stage's two-tower weights
+are cached in `cache/` by the stage's start day, so reruns skip training.
 
 ## Layout
 ```
@@ -176,7 +185,7 @@ AB_TEST_PLAN.md         online experiment design
    6 ms scoring step. Also try scoring fewer candidates, such as the top 150 per source.
 3. **Scalable EASE:** sparsify B, or precompute EASE candidates offline, before moving to
    a catalog of 100k+ items.
-4. **H&M retrieval recall:** the four-source union finds only 18.5% of purchases. Add more
+4. **H&M retrieval recall:** the four-source union finds only 19.0% of purchases. Add more
    sources (items bought together with recent purchases, trending items by age group), and
    run more seeds. Tuning EASE λ further won't help: λ = 50 is an interior optimum of a grid
    from 0.2 to 3200.

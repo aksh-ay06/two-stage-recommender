@@ -257,39 +257,48 @@ variant.
 
 ## 7. H&M: 105k articles, real purchases
 
-Produced by `run_hm.py` (seed 42, about 29 minutes on CPU). Outputs are in `results/hm/`
-and the log is `results/logs/hm_full.log`.
+Produced by `run_hm.py` (seed 42, 69 minutes on CPU including three two-tower trainings).
+Outputs are in `results/hm/` and the log is `results/logs/hm_full.log`.
 
 | | |
 |---|---|
 | Data | 31.8M purchases, 1.37M customers, 105,542 articles (2018-09 to 2020-09) |
-| Protocol | the Kaggle competition's. **Test** = the last week (2020-09-16 to 22), **validation** = the week before. Each stage sees a 12-week history window strictly before its target week. |
+| Protocol | weekly, like the Kaggle competition. **Test** = the last week (2020-09-16 to 22), **validation** = the week before, and **two earlier weeks** (2020-08-26 to 09-08) add ranker training data. Each stage sees a 12-week history window strictly before its target week. |
 | Evaluated users | customers who buy in the target week *and* have history in the window: 49,219 of 68,984 test-week buyers (71%), buying 3.1 items on average |
-| Metric | **MAP@12** (the competition metric), plus Recall@12 and NDCG@12 |
+| Metric | **MAP@12** (the competition's definition), plus Recall@12 and NDCG@12 |
 | Seeds | 1 (42) |
 
-**Candidates.** Four sources, unioned per user (about 165 unique articles per user):
+**Not comparable to the Kaggle leaderboard.** The leaderboard scored a later, hidden week
+(2020-09-23 to 29) over all of that week's buyers, including those with no history. This
+page scores a different week and only buyers with history, which is an easier population.
+
+**Every stage is built from its own history.** Each of the four stages (two earlier
+training weeks, validation, test) gets its own two-tower model trained on that stage's
+history, plus its own EASE, feature store and candidates. No target week is ever a
+training target for the models that produce its features.
+
+**Candidates.** Four sources, unioned per user (about 163 unique articles per user):
 
 - **Two-tower top 100.** It retrieves from the articles sold in the last 4 weeks. The user
   tower has no customer-ID embedding (1.37M IDs, most with a handful of purchases); it uses
   age, club status, newsletter frequency and the mean of the last 20 purchases. The item
-  tower has the article ID plus 8 catalog attributes. It's trained once with logQ
-  correction, for 3 epochs on the validation-stage history, and reused at test time with
-  user embeddings recomputed from the newer history.
+  tower has the article ID plus 8 catalog attributes. Trained with logQ correction for 3
+  epochs.
 - **EASE top 50**, over the 8,000 best-selling articles of the last 4 weeks.
 - **Re-buy:** up to 30 articles the customer bought before.
 - **Popular:** last week's 30 best-sellers.
 
-**Decisions on validation.** EASE λ was picked on the validation week (λ = 50, from
-0.2 to 3200). Three
-LambdaRank variants were trained on 9,600 validation users, and the one with the best MAP@12
-on the other 2,400 (ranker-holdout) users was selected:
+**Decisions on validation.** EASE λ was picked on the validation week (λ = 50, from a grid
+of 0.2 to 3200). Three LambdaRank variants were trained on 15,883 users with at least one
+purchased candidate: 3,253 of 9,600 validation users, 6,395 from the week before and 6,235
+from the week before that. The variant with the best MAP@12 on the other 2,400 validation
+(ranker-holdout) users was selected:
 
 | Variant (ranker-holdout users, validation week) | MAP@12 | Recall@12 | NDCG@12 | Trees |
 |---|---|---|---|---|
-| GBM on two-tower candidates | 0.0224 | 0.0459 | 0.0344 | 128 |
-| Multi-source GBM, all features | 0.0406 | 0.0841 | 0.0596 | 55 |
-| **Multi-source GBM w/o two-tower feats (selected)** | **0.0411** | 0.0840 | **0.0599** | 26 |
+| GBM on two-tower candidates | 0.0246 | 0.0477 | 0.0371 | 105 |
+| **Multi-source GBM, all features (selected)** | **0.0425** | **0.0867** | **0.0623** | 40 |
+| Multi-source GBM w/o two-tower feats | 0.0409 | 0.0860 | 0.0608 | 45 |
 
 **Test results (49,219 users):**
 
@@ -298,68 +307,100 @@ on the other 2,400 (ranker-holdout) users was selected:
 | Popularity (last week) | 0.0091 | 0.0255 | 0.0161 |
 | Re-buy, then popular | 0.0331 | 0.0634 | 0.0462 |
 | EASE (λ = 50) | 0.0148 | 0.0394 | 0.0247 |
-| Two-tower (stage 1 only) | 0.0069 | 0.0201 | 0.0125 |
-| GBM on two-tower candidates | 0.0171 | 0.0346 | 0.0257 |
-| Multi-source GBM, all features | 0.0377 | 0.0776 | 0.0546 |
-| **Two-stage, selected: multi-source GBM w/o two-tower feats** | **0.0381** | **0.0780** | **0.0550** |
+| Two-tower (stage 1 only) | 0.0076 | 0.0229 | 0.0140 |
+| GBM on two-tower candidates | 0.0207 | 0.0419 | 0.0310 |
+| **Two-stage, selected: multi-source GBM, all features** | **0.0404** | **0.0817** | **0.0581** |
+| Multi-source GBM w/o two-tower feats | 0.0406 | 0.0811 | 0.0580 |
 
 Paired lift in MAP@12 for the selected system (bootstrap over users, 95% CI):
 
 | Selected two-stage vs… | MAP@12 lift | 95% CI |
 |---|---|---|
-| Re-buy, then popular | **+15.0%** | [+12.6, +17.4] |
-| EASE | +157.1% | [+144.6, +170.0] |
-| GBM on two-tower candidates | +123.4% | [+113.7, +134.0] |
-| Popularity (last week) | +318.8% | [+291.9, +350.0] |
-| Two-tower | +450.2% | [+413.9, +488.3] |
-| Multi-source GBM, all features | +1.1% | [−0.3, +2.6] |
+| Re-buy, then popular | **+21.8%** | [+19.5, +24.3] |
+| EASE | +172.3% | [+159.5, +185.4] |
+| GBM on two-tower candidates | +95.0% | [+87.0, +102.9] |
+| Popularity (last week) | +343.6% | [+315.3, +375.9] |
+| Two-tower | +429.9% | [+397.4, +464.8] |
+| Multi-source GBM w/o two-tower feats | −0.5% | [−1.7, +0.6] |
 
-GBM on two-tower candidates vs two-tower alone: +146.3% [+131.1, +163.4].
+GBM on two-tower candidates vs two-tower alone: +171.7% [+155.3, +188.5].
 
 **Candidate recall on test** (share of a user's purchased articles that a source retrieves):
 
 | Source | Recall |
 |---|---|
-| Two-tower top 100 | 0.077 |
+| Two-tower top 100 | 0.093 |
 | EASE top 50 | 0.085 |
 | Re-buy (≤ 30) | 0.053 |
 | Popular (30) | 0.052 |
-| **Union (about 165 per user)** | **0.185** |
+| **Union (about 163 per user)** | **0.190** |
+
+**What changed from the first H&M run, and why.** The first run trained one two-tower
+model on the validation-stage history and reused it at test time, and trained the rankers
+on the validation week only. At test time, 13.4% of test-week purchases were articles that
+model had never trained on, 9 points of them articles first sold in the validation week.
+So the two-tower was handicapped against sources refit on the test history. Rerunning with
+the old one-week ranker training (`--train-weeks 1`, outputs in `results/hm_1week/`)
+separates the two fixes:
+
+| Test MAP@12 | First run | + test-stage two-tower | + 3 ranker training weeks (current) |
+|---|---|---|---|
+| Two-tower (recall of its top 100) | 0.0069 (0.077) | 0.0076 (0.093) | 0.0076 (0.093) |
+| GBM on two-tower candidates | 0.0171 | 0.0192 | 0.0207 |
+| Multi-source GBM, all features | 0.0377 | 0.0377 | **0.0404** |
+| Multi-source GBM w/o two-tower feats | 0.0381 | 0.0381 | 0.0406 |
+| Selected vs re-buy, then popular | +15.0% [+12.6, +17.4] | +15.0% [+12.7, +17.4] | **+21.8% [+19.5, +24.3]** |
+
+- **The fresh two-tower helps the two-tower, not the system.** Its recall rises from 7.7%
+  to 9.3%, but the multi-source GBM doesn't move.
+- **More ranker training data is the real gain:** about +7% MAP@12. With one week, only
+  3,253 users had a purchased candidate and the rankers stopped after 26–55 trees.
 
 What this shows:
 
-- **The two-stage system beats the strongest simple baseline.** "Re-buy, then popular" is
-  the hard baseline on this data, and the multi-source GBM beats it by 15% on MAP@12. On
-  the smoke runs (4-week window, 1 epoch, 3,000 test users) this comparison was −3% to
-  −4% and not significant; on the full data it is clearly positive.
-- **Retrieval is the bottleneck.** The union holds only 18.5% of what users buy, so no
+- **The two-stage system beats the strongest simple baseline by 22%.** "Re-buy, then
+  popular" is the hard baseline on this data.
+- **Retrieval is the bottleneck.** The union holds only 19.0% of what users buy, so no
   ranker on these candidates can exceed that recall. Each source on its own finds 5–9%, and
   they overlap little.
 - **The two-tower model is a candidate source, not a ranking signal.** On its own it ranks
-  below last-week popularity (MAP@12 0.0069 vs 0.0091). As a source its recall (7.7%) is
-  close to EASE's (8.5%). As ranker features it adds nothing: with and without them the
-  multi-source GBM is within 1.1% [−0.3, +2.6], and validation preferred the version
-  without them.
+  below last-week popularity (MAP@12 0.0076 vs 0.0091). As a source it now has the highest
+  recall of the four (9.3%). As ranker features it adds nothing: with and without them the
+  multi-source GBM is within 0.5% [−1.7, +0.6]. Validation picked the all-features variant
+  this time and the other one in the first run; the two are tied.
 - **Candidates matter more than features here.** The GBM restricted to two-tower
-  candidates scores less than half the multi-source GBM. The opposite of MovieLens
+  candidates scores about half the multi-source GBM. The opposite of MovieLens
   leave-last-5, where EASE helped mostly as a feature.
-- **What the selected ranker uses.** Top features by gain: `i_department_no` 18.2%,
-  `ui_days_since` 13.8%, `u_product_code_cnt` 10.3%, `u_days_since_last` 8.0%,
-  `i_log_sales_1w` 7.9%, `ease_score` 5.4%. Recency and recent popularity dominate, as
-  is typical for fashion purchases.
+- **What the selected ranker uses.** Top features by gain: `ui_days_since` 17.8%,
+  `i_department_no` 14.3%, `i_log_sales_1w` 10.3%, `u_product_code_cnt` 8.0%,
+  `u_days_since_last` 7.6%, `i_days_since_first` 5.5%, `ease_score` 4.5%. Recency and
+  recent popularity dominate, as is typical for fashion purchases.
+
+**Smoke runs** (4-week window, 1 epoch, 2 ranker training weeks, 3,000 test users;
+`results/hm_smoke*/`):
+
+| Smoke run | Two-tower recall | Union recall | Selected MAP@12 | vs re-buy, then popular |
+|---|---|---|---|---|
+| With logQ | 0.095 | 0.216 | 0.0505 | +5.5% [−1.4, +12.7] |
+| Without logQ | 0.007 | 0.183 | 0.0515 | +7.5% [−0.8, +15.7] |
+
+- **logQ is essential for the two-tower model as a retriever:** without it, its recall
+  collapses from 9.5% to 0.7%, and its own MAP@12 to 0.0003.
+- **The final system barely notices,** because EASE and re-buy cover most of what the
+  two-tower finds. That matches the full run, where the two-tower adds little to the ranker.
+- **The smoke runs are too small to beat re-buy-then-popular significantly;** the full run
+  does.
 
 **H&M-specific caveats:**
 
 - **One seed.** The CIs cover variation across users, not across training runs.
-- **EASE is weak on this data however λ is set.** The grid is {0.2, 0.8, 3, 12, 50, 200,
-  800, 3200}, and λ = 50 is an interior optimum. Validation MAP@12 peaks at 0.0162 there; it
-  falls to 0.0145 at λ = 3200 but stays flat around 0.0160 for every λ ≤ 12. So EASE's
-  weakness here isn't a tuning artefact.
+- **EASE is weak on this data however λ is set.** On the full run, λ = 50 is an interior
+  optimum of the grid {0.2, 0.8, 3, 12, 50, 200, 800, 3200}. Validation MAP@12 peaks at
+  0.0162 there; it falls to 0.0145 at λ = 3200 but stays flat around 0.0160 for every
+  λ ≤ 12. So EASE's weakness here isn't a tuning artefact. (On the smoke setting λ = 0.2
+  wins, at the grid's edge, but the curve is just as flat: 0.0208 vs 0.0207 at λ = 12.)
 - **29% of test-week buyers aren't scored**, because they have no purchase in the 12-week
   window. They are cold-start users for every system here.
-- **logQ matters for the two-tower model.** On the smoke setting (3,000 test users),
-  training without the logQ correction cut its candidate recall from 0.089 to 0.010. That
-  comparison has not been repeated on the full run.
 
 ## Caveats
 
