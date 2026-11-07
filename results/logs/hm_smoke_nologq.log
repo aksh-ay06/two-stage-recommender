@@ -1,0 +1,40 @@
+val: history 972,591 purchases, 234,989 customers | target week buyers 72,019, evaluated (have history) 32,414 (45%), mean items bought 3.1
+test: history 963,309 purchases, 235,277 customers | target week buyers 68,984, evaluated (have history) 31,095 (45%), mean items bought 3.0
+== two-tower training on the validation-stage history ==
+  [two-tower] epoch 1/1 loss=8.3634 (127s)
+== VAL stage ==
+  EASE lambda on val (MAP@12): {50: 0.02052409188254426, 200: 0.020311873334631268, 800: 0.019690470292494103, 3200: 0.019090953669346527} -> 50
+  val chunk: 3,000 users, 530,435 candidate rows, pos rate 0.0025
+  [ranker] drop=['ease_score', 'ease_rank', 'rebuy_rank', 'pop_rank']  train rows=4,400 users=44 pos_rate=0.0107
+  [ranker] best_iter=49
+  [ranker] drop=-  train rows=140,029 users=788 pos_rate=0.0076
+  [ranker] best_iter=12
+  [ranker] drop=['tt_score', 'tt_rank', 'sim_last', 'sim_recent_max', 'sim_recent_mean']  train rows=140,029 users=788 pos_rate=0.0076
+  [ranker] best_iter=43
+                                      MAP@12  Recall@12  NDCG@12
+GBM on two-tower candidates           0.0043     0.0042   0.0047
+Multi-source GBM (all features)       0.0584     0.1001   0.0785
+Multi-source GBM w/o two-tower feats  0.0612     0.1022   0.0804
+VAL (ranker-holdout users, n=600) -> selected ranker: Multi-source GBM w/o two-tower feats
+== TEST stage ==
+  test chunk: 3,000 users, 532,197 rows (152s)
+
+TEST (3,000 users):
+                                      MAP@12  Recall@12  NDCG@12
+Popularity (last week)                0.0091     0.0250   0.0159
+Re-buy, then popular                  0.0493     0.0878   0.0665
+EASE                                  0.0217     0.0570   0.0366
+Two-tower                             0.0011     0.0032   0.0018
+GBM on two-tower candidates           0.0044     0.0077   0.0060
+Multi-source GBM (all features)       0.0456     0.0923   0.0648
+Multi-source GBM w/o two-tower feats  0.0476     0.0906   0.0667
+  candidate recall (share of a user's purchases found by each source): {'two-tower': 0.0104, 'EASE': 0.1044, 're-buy': 0.0722, 'popular': 0.0505, 'union': 0.1846, 'candidates_per_user': 177.399}
+  Multi-source GBM w/o two-tower feats vs Two-tower: MAP@12 +4143.6%  95% CI [+2144.1%, +10896.6%]
+  Multi-source GBM w/o two-tower feats vs Re-buy, then popular: MAP@12 -3.3%  95% CI [-10.2%, +3.8%]
+  Multi-source GBM w/o two-tower feats vs EASE: MAP@12 +119.0%  95% CI [+85.6%, +158.6%]
+  Multi-source GBM w/o two-tower feats vs Popularity (last week): MAP@12 +423.8%  95% CI [+300.7%, +613.2%]
+  Multi-source GBM w/o two-tower feats vs GBM on two-tower candidates: MAP@12 +977.4%  95% CI [+639.9%, +1738.6%]
+  Multi-source GBM w/o two-tower feats vs Multi-source GBM (all features): MAP@12 +4.4%  95% CI [-1.7%, +10.9%]
+  GBM on two-tower candidates vs Two-tower: MAP@12 +293.9%  95% CI [+95.7%, +920.5%]
+
+Saved C:\Users\ap783\OneDrive\Desktop\Recommender System\results\hm_smoke_nologq  (152s)
