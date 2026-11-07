@@ -35,13 +35,18 @@ def itemknn_scores(X: np.ndarray, k: int) -> np.ndarray:
     return X @ S
 
 
-def ease_scores(X: np.ndarray, lam: float) -> np.ndarray:
+def ease_weights(X: np.ndarray, lam: float) -> np.ndarray:
+    """Item-item weight matrix B (diag 0). A user's scores are the sum of B's rows for their items."""
     G = (X.T @ X).astype(np.float64)
     G[np.diag_indices_from(G)] += lam
     P = np.linalg.inv(G)
     B = -P / np.diag(P)[None, :]
     np.fill_diagonal(B, 0.0)
-    return (X @ B.astype(np.float32))
+    return B.astype(np.float32)
+
+
+def ease_scores(X: np.ndarray, lam: float) -> np.ndarray:
+    return X @ ease_weights(X, lam)
 
 
 def top_k_unseen(scores: np.ndarray, X: np.ndarray, users: np.ndarray, k: int) -> np.ndarray:

@@ -21,6 +21,7 @@ CATEGORICAL = ["user_gender", "user_age"]
 FEATURE_EXCLUDE = {"user", "item", "label"}
 RECENCY_FEATURES = ("sim_recent_max", "sim_recent_mean", "sim_last")
 TWO_TOWER_FEATURES = ("tt_score", "tt_rank")
+EASE_FEATURES = ("ease_score", "ease_rank")
 
 
 class FeatureStore:
@@ -60,50 +61,49 @@ class FeatureStore:
         self.recent = np.full((nu, n_recent), -1, dtype=np.int64)
         self.recent[u_idx[keep], n_recent - 1 - from_end[keep]] = i_idx[keep]
 
-    def transform(self, users: np.ndarray, cand_items: np.ndarray, cand_scores: np.ndarray) -> pd.DataFrame:
-        n, k = cand_items.shape
-        it = cand_items.ravel()
-        rep = lambda a: np.repeat(a[users], k)  # noqa: E731
+    def transform(self, users: np.ndarray, items: np.ndarray, extra: dict | None = None,
+                  chunk: int = 200_000) -> pd.DataFrame:
+        """One row per (user, item) pair. ``users`` and ``items`` are flat arrays of equal length.
 
-        # similarity of each candidate to the user's most recent items (two-tower item space)
-        R = self.recent[users]                              # [n, r]
-        valid = R >= 0
-        Vr = self.V[np.maximum(R, 0)] * valid[..., None]    # [n, r, d]
-        sims = np.einsum("nkd,nrd->nkr", self.V[cand_items], Vr)
-        v = valid[:, None, :]
-        sim_max = np.where(v, sims, -np.inf).max(-1)
-        sim_mean = sims.sum(-1) / np.maximum(v.sum(-1), 1)
-        sim_last = np.where(valid[:, -1:], sims[:, :, -1], 0.0)
+        ``extra`` holds per-pair retrieval features, e.g. tt_score / tt_rank / ease_score / ease_rank.
+        """
+        f32 = lambda a: np.asarray(a, dtype=np.float32)  # noqa: E731
 
-        cand_genres = self.G[it]
-        affinity = (np.repeat(self.u_genre[users], k, axis=0) * cand_genres).sum(1) / np.maximum(cand_genres.sum(1), 1)
+        # similarity of each candidate to the user's most recent items (two-tower item space), chunked
+        m = len(items)
+        sim_max, sim_mean, sim_last = (np.empty(m, np.float32) for _ in range(3))
+        for s in range(0, m, chunk):
+            u, it = users[s:s + chunk], items[s:s + chunk]
+            R = self.recent[u]                                   # [c, r]
+            valid = R >= 0
+            sims = np.einsum("cd,crd->cr", self.V[it], self.V[np.maximum(R, 0)]) * valid
+            sim_max[s:s + chunk] = np.where(valid, sims, -np.inf).max(1)
+            sim_mean[s:s + chunk] = sims.sum(1) / np.maximum(valid.sum(1), 1)
+            sim_last[s:s + chunk] = np.where(valid[:, -1], sims[:, -1], 0.0)
 
-        feats = {
-            "user": np.repeat(users, k),
-            "item": it,
-            "tt_score": cand_scores.ravel(),
-            "tt_rank": np.tile(np.arange(k), n),
-            "sim_recent_max": sim_max.ravel(),
-            "sim_recent_mean": sim_mean.ravel(),
-            "sim_last": sim_last.ravel(),
-            "item_log_pop": self.log_pop[it],
-            "item_log_pop_recent": self.log_pop_recent[it],
-            "item_mean_rating": self.item_mean[it],
-            "item_age_days": (rep(self.u_last_ts) - self.item_first_ts[it]) / 86400.0,
-            "item_year": self.year[it],
-            "user_cnt": rep(self.u_cnt),
-            "user_mean_rating": rep(self.u_mean),
-            "user_gender": rep(self.u_gender),
-            "user_age": rep(self.u_age),
-            "genre_affinity": affinity,
-            "year_gap": self.year[it] - rep(self.u_year),
-            "rating_gap": self.item_mean[it] - rep(self.u_mean),
-            "pop_gap": self.log_pop[it] - rep(self.u_logpop),
-        }
+        cand_genres = self.G[items]
+        affinity = (self.u_genre[users] * cand_genres).sum(1) / np.maximum(cand_genres.sum(1), 1)
+
+        feats = {"user": users, "item": items}
+        feats.update({k: f32(v) for k, v in (extra or {}).items()})
+        feats.update({
+            "sim_recent_max": sim_max,
+            "sim_recent_mean": sim_mean,
+            "sim_last": sim_last,
+            "item_log_pop": f32(self.log_pop[items]),
+            "item_log_pop_recent": f32(self.log_pop_recent[items]),
+            "item_mean_rating": f32(self.item_mean[items]),
+            "item_age_days": f32((self.u_last_ts[users] - self.item_first_ts[items]) / 86400.0),
+            "item_year": f32(self.year[items]),
+            "user_cnt": f32(self.u_cnt[users]),
+            "user_mean_rating": f32(self.u_mean[users]),
+            "user_gender": self.u_gender[users],
+            "user_age": self.u_age[users],
+            "genre_affinity": f32(affinity),
+            "year_gap": f32(self.year[items] - self.u_year[users]),
+            "rating_gap": f32(self.item_mean[items] - self.u_mean[users]),
+            "pop_gap": f32(self.log_pop[items] - self.u_logpop[users]),
+        })
         for gi, gname in enumerate(GENRES):
-            feats[f"g_{gname}"] = cand_genres[:, gi]
+            feats[f"g_{gname}"] = cand_genres[:, gi].astype(np.int8)
         return pd.DataFrame(feats)
-
-
-def build_features(ds, hist_df, users, cand_items, cand_scores, V, n_recent: int = 5) -> pd.DataFrame:
-    return FeatureStore(ds, hist_df, V, n_recent).transform(users, cand_items, cand_scores)

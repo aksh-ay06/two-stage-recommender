@@ -32,10 +32,14 @@ def split_ranker_users(users: np.ndarray, holdout_frac: float = 0.2, seed: int =
 def train_ranker(df: pd.DataFrame, train_users: np.ndarray, hold_users: np.ndarray,
                  drop=(), seed: int = 42) -> lgb.LGBMRanker:
     # Users with no positive among their candidates give LambdaRank zero gradient; drop them.
-    df = df[df.groupby("user").label.transform("max") > 0]
-    tr, va = df[df.user.isin(train_users)], df[df.user.isin(hold_users)]
+    # Build each slice once, with only the columns needed (keeps peak memory low).
+    keep = (df.groupby("user").label.transform("max") > 0).to_numpy()
     cols = feature_cols(df, drop)
-    print(f"  [ranker] drop={list(drop) or '-'}  train rows={len(tr):,} users={tr.user.nunique():,} pos_rate={tr.label.mean():.4f}")
+    m_tr = keep & df.user.isin(train_users).to_numpy()
+    m_va = keep & df.user.isin(hold_users).to_numpy()
+    X_tr, y_tr, g_tr = df.loc[m_tr, cols], df.label.to_numpy()[m_tr], _groups(df.user.to_numpy()[m_tr])
+    X_va, y_va, g_va = df.loc[m_va, cols], df.label.to_numpy()[m_va], _groups(df.user.to_numpy()[m_va])
+    print(f"  [ranker] drop={list(drop) or '-'}  train rows={len(X_tr):,} users={len(g_tr):,} pos_rate={y_tr.mean():.4f}")
 
     model = lgb.LGBMRanker(
         objective="lambdarank",
@@ -52,8 +56,8 @@ def train_ranker(df: pd.DataFrame, train_users: np.ndarray, hold_users: np.ndarr
         verbose=-1,
     )
     model.fit(
-        tr[cols], tr.label, group=_groups(tr.user.to_numpy()),
-        eval_X=(va[cols],), eval_y=(va.label,), eval_group=[_groups(va.user.to_numpy())],
+        X_tr, y_tr, group=g_tr,
+        eval_X=(X_va,), eval_y=(y_va,), eval_group=[g_va],
         eval_at=[10], categorical_feature=[c for c in CATEGORICAL if c in cols],
         callbacks=[lgb.early_stopping(50, verbose=False)],
     )
@@ -62,16 +66,20 @@ def train_ranker(df: pd.DataFrame, train_users: np.ndarray, hold_users: np.ndarr
 
 
 def _order(df: pd.DataFrame, scores: np.ndarray, k: int) -> np.ndarray:
-    n = len(df) // k
-    items = df.item.to_numpy().reshape(n, k)
-    order = np.argsort(-scores.reshape(n, k), axis=1, kind="stable")
-    return np.take_along_axis(items, order, 1)
+    """Top-``k`` items per user by score -> [n_users, k]. Groups may differ in size (each >= k)."""
+    users = df.user.to_numpy()
+    idx = np.lexsort((-scores, users))  # by user, then score descending (stable on ties)
+    u_sorted, items = users[idx], df.item.to_numpy()[idx]
+    first = np.r_[0, np.flatnonzero(np.diff(u_sorted)) + 1]
+    pos = np.arange(len(idx)) - np.repeat(first, np.diff(np.r_[first, len(idx)]))
+    return items[pos < k].reshape(len(first), k)
 
 
 def rerank(model: lgb.LGBMRanker, df: pd.DataFrame, k: int) -> np.ndarray:
     return _order(df, model.predict(df[list(model.feature_names_in_)], num_iteration=model.best_iteration_), k)
 
 
-def rerank_by(df: pd.DataFrame, column: str, k: int) -> np.ndarray:
+def rerank_by(df: pd.DataFrame, column: str, k: int, ascending: bool = False) -> np.ndarray:
     """Heuristic reranker: sort each user's candidates by a single feature."""
-    return _order(df, df[column].to_numpy(), k)
+    v = df[column].to_numpy(np.float64)
+    return _order(df, -v if ascending else v, k)

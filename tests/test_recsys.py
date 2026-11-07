@@ -142,8 +142,31 @@ def test_feature_store_recent_items_are_right_aligned_and_ordered(ds):
     store = FeatureStore(ds, ds.interactions, V, n_recent=3)
     for u, g in ds.interactions.groupby("user"):
         assert store.recent[u].tolist() == g.item.tolist()[-3:]
-    cand = np.array([[0, 1, 2]])
-    f = store.transform(np.array([0]), cand, np.zeros((1, 3)))
+    cand = np.array([0, 1, 2])
+    f = store.transform(np.zeros(3, dtype=np.int64), cand, {"tt_score": np.zeros(3)}, chunk=2)  # chunk < rows
     last = store.recent[0, -1]
-    assert f.sim_last.to_numpy() == pytest.approx(V[cand[0]] @ V[last], rel=1e-5)
-    assert len(f) == 3 and not f.drop(columns=["item_mean_rating", "rating_gap"]).isna().any().any()
+    assert f.sim_last.to_numpy() == pytest.approx(V[cand] @ V[last], rel=1e-5)
+    assert f.sim_recent_max.to_numpy() == pytest.approx((V[cand] @ V[store.recent[0]].T).max(1), rel=1e-5)
+    assert "tt_score" in f and len(f) == 3
+    assert not f.drop(columns=["item_mean_rating", "rating_gap"]).isna().any().any()
+
+
+# ---------------------------------------------------------------- multi-source candidates
+def test_merge_candidates_is_union_with_capped_ranks():
+    from recsys.candidates import merge_candidates
+    S_tt = np.array([[5, 4, 3, 2, 1, -np.inf], [1, 2, 3, 4, 5, 6]], dtype=np.float32)
+    S_ease = np.array([[1, 2, 3, 4, 5, -np.inf], [6, 5, 4, 3, 2, 1]], dtype=np.float32)
+    c = merge_candidates(S_tt, S_ease, k=2)
+    got = {(int(r), int(i)) for r, i in zip(c.rows, c.items)}
+    assert got == {(0, 0), (0, 1), (0, 4), (0, 3), (1, 5), (1, 4), (1, 0), (1, 1)}
+    assert (np.diff(c.rows) >= 0).all()                       # grouped by user row
+    row0 = {int(i): (tr, er) for r, i, tr, er in zip(c.rows, c.items, c.tt_rank, c.ease_rank) if r == 0}
+    assert row0[0] == (0, 2) and row0[4] == (2, 0)            # absent from a source -> rank capped at k
+    assert c.tt_top[0].tolist() == [0, 1] and c.ease_top[0].tolist() == [4, 3]
+    assert 5 not in c.items[c.rows == 0]                      # seen (-inf) item never retrieved
+
+
+def test_rerank_handles_variable_group_sizes():
+    from recsys.ranker import rerank_by
+    df = pd.DataFrame({"user": [0, 0, 0, 1, 1], "item": [7, 8, 9, 3, 4], "s": [0.1, 0.9, 0.5, 0.2, 0.3]})
+    assert rerank_by(df, "s", 2).tolist() == [[8, 9], [4, 3]]
