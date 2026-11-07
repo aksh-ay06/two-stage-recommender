@@ -7,22 +7,22 @@ global,1,EASE,Recall@10,0.05076259613712764,,1
 global,1,EASE,Recall@20,0.0844491583065961,,1
 global,1,EASE,Recall@200,0.3856797254987623,,1
 global,1,EASE,Recall@50,0.16285434592989112,,1
-global,1,GBM (all features),NDCG@10,0.24827144388324168,,1
-global,1,GBM (all features),NDCG@20,0.2332834238272863,,1
-global,1,GBM (all features),NDCG@200,0.2506453747328509,,1
-global,1,GBM (all features),NDCG@50,0.22594120973724005,,1
-global,1,GBM (all features),Recall@10,0.05062151102175964,,1
-global,1,GBM (all features),Recall@20,0.08150834994070208,,1
-global,1,GBM (all features),Recall@200,0.3165832211605659,,1
-global,1,GBM (all features),Recall@50,0.15257829045485682,,1
-global,1,GBM w/o two-tower feats,NDCG@10,0.25615083462670923,,1
-global,1,GBM w/o two-tower feats,NDCG@20,0.24088098515928502,,1
-global,1,GBM w/o two-tower feats,NDCG@200,0.25334630208431985,,1
-global,1,GBM w/o two-tower feats,NDCG@50,0.22957008893799644,,1
-global,1,GBM w/o two-tower feats,Recall@10,0.05356374469829831,,1
-global,1,GBM w/o two-tower feats,Recall@20,0.0864594422210726,,1
-global,1,GBM w/o two-tower feats,Recall@200,0.3165832211605659,,1
-global,1,GBM w/o two-tower feats,Recall@50,0.1555234172640898,,1
+global,1,GBM on two-tower candidates,NDCG@10,0.2538539522368338,,1
+global,1,GBM on two-tower candidates,NDCG@20,0.24123588176800936,,1
+global,1,GBM on two-tower candidates,NDCG@200,0.2537608668416931,,1
+global,1,GBM on two-tower candidates,NDCG@50,0.2301947709823384,,1
+global,1,GBM on two-tower candidates,Recall@10,0.05582794720118599,,1
+global,1,GBM on two-tower candidates,Recall@20,0.09038618485247346,,1
+global,1,GBM on two-tower candidates,Recall@200,0.3165832211605659,,1
+global,1,GBM on two-tower candidates,Recall@50,0.15570485152948663,,1
+global,1,GBM on two-tower candidates + EASE feats,NDCG@10,0.2700994582471747,,1
+global,1,GBM on two-tower candidates + EASE feats,NDCG@20,0.25396806074189565,,1
+global,1,GBM on two-tower candidates + EASE feats,NDCG@200,0.2597245905899304,,1
+global,1,GBM on two-tower candidates + EASE feats,NDCG@50,0.2429045533486171,,1
+global,1,GBM on two-tower candidates + EASE feats,Recall@10,0.058767149733242346,,1
+global,1,GBM on two-tower candidates + EASE feats,Recall@20,0.09040458594353919,,1
+global,1,GBM on two-tower candidates + EASE feats,Recall@200,0.3165832211605659,,1
+global,1,GBM on two-tower candidates + EASE feats,Recall@50,0.1627114856479921,,1
 global,1,Item-kNN,NDCG@10,0.26525558172433344,,1
 global,1,Item-kNN,NDCG@20,0.2463817348536067,,1
 global,1,Item-kNN,NDCG@200,0.267078466134062,,1
@@ -31,6 +31,38 @@ global,1,Item-kNN,Recall@10,0.04271045294410974,,1
 global,1,Item-kNN,Recall@20,0.07126740119520587,,1
 global,1,Item-kNN,Recall@200,0.3272614150333372,,1
 global,1,Item-kNN,Recall@50,0.1355084437656312,,1
+global,1,Multi-source GBM (all features),NDCG@10,0.2987438193382406,,1
+global,1,Multi-source GBM (all features),NDCG@20,0.28191390157851665,,1
+global,1,Multi-source GBM (all features),NDCG@200,0.3232133024871043,,1
+global,1,Multi-source GBM (all features),NDCG@50,0.2747590650034317,,1
+global,1,Multi-source GBM (all features),Recall@10,0.06722314036793639,,1
+global,1,Multi-source GBM (all features),Recall@20,0.10548522754055338,,1
+global,1,Multi-source GBM (all features),Recall@200,0.4094308162289011,,1
+global,1,Multi-source GBM (all features),Recall@50,0.18784783014798118,,1
+global,1,Multi-source GBM w/o EASE feats,NDCG@10,0.2502113891125435,,1
+global,1,Multi-source GBM w/o EASE feats,NDCG@20,0.23940470490637217,,1
+global,1,Multi-source GBM w/o EASE feats,NDCG@200,0.30153643879631525,,1
+global,1,Multi-source GBM w/o EASE feats,NDCG@50,0.24063120169162466,,1
+global,1,Multi-source GBM w/o EASE feats,Recall@10,0.06161532631669695,,1
+global,1,Multi-source GBM w/o EASE feats,Recall@20,0.09344251071696075,,1
+global,1,Multi-source GBM w/o EASE feats,Recall@200,0.3943684236584598,,1
+global,1,Multi-source GBM w/o EASE feats,Recall@50,0.16947592925918714,,1
+global,1,Multi-source GBM w/o recency sims,NDCG@10,0.28907765829347826,,1
+global,1,Multi-source GBM w/o recency sims,NDCG@20,0.27637891362593703,,1
+global,1,Multi-source GBM w/o recency sims,NDCG@200,0.32306805142001443,,1
+global,1,Multi-source GBM w/o recency sims,NDCG@50,0.2733016633962895,,1
+global,1,Multi-source GBM w/o recency sims,Recall@10,0.06505029290246529,,1
+global,1,Multi-source GBM w/o recency sims,Recall@20,0.10466683471617291,,1
+global,1,Multi-source GBM w/o recency sims,Recall@200,0.41148934343523075,,1
+global,1,Multi-source GBM w/o recency sims,Recall@50,0.18997077574987267,,1
+global,1,Multi-source GBM w/o two-tower feats,NDCG@10,0.3025920697500811,,1
+global,1,Multi-source GBM w/o two-tower feats,NDCG@20,0.2857664471601036,,1
+global,1,Multi-source GBM w/o two-tower feats,NDCG@200,0.3266491636087866,,1
+global,1,Multi-source GBM w/o two-tower feats,NDCG@50,0.278671009042694,,1
+global,1,Multi-source GBM w/o two-tower feats,Recall@10,0.06894100799631314,,1
+global,1,Multi-source GBM w/o two-tower feats,Recall@20,0.10984159534364704,,1
+global,1,Multi-source GBM w/o two-tower feats,Recall@200,0.4108656606298264,,1
+global,1,Multi-source GBM w/o two-tower feats,Recall@50,0.1931552472261198,,1
 global,1,Popularity,NDCG@10,0.2536385762032336,,1
 global,1,Popularity,NDCG@20,0.24009421901529593,,1
 global,1,Popularity,NDCG@200,0.2678738223966769,,1
@@ -39,14 +71,14 @@ global,1,Popularity,Recall@10,0.0392821411032734,,1
 global,1,Popularity,Recall@20,0.0706709258086564,,1
 global,1,Popularity,Recall@200,0.3418138381717207,,1
 global,1,Popularity,Recall@50,0.14278153963523157,,1
-global,1,Two-stage (GBM rerank),NDCG@10,0.25335523592518644,,1
-global,1,Two-stage (GBM rerank),NDCG@20,0.23949157237393268,,1
-global,1,Two-stage (GBM rerank),NDCG@200,0.2532131323923024,,1
-global,1,Two-stage (GBM rerank),NDCG@50,0.2299091627683912,,1
-global,1,Two-stage (GBM rerank),Recall@10,0.052958031180966814,,1
-global,1,Two-stage (GBM rerank),Recall@20,0.08553666174085861,,1
-global,1,Two-stage (GBM rerank),Recall@200,0.3165832211605659,,1
-global,1,Two-stage (GBM rerank),Recall@50,0.15484063580864252,,1
+global,1,Two-stage (selected),NDCG@10,0.3025920697500811,,1
+global,1,Two-stage (selected),NDCG@20,0.2857664471601036,,1
+global,1,Two-stage (selected),NDCG@200,0.3266491636087866,,1
+global,1,Two-stage (selected),NDCG@50,0.278671009042694,,1
+global,1,Two-stage (selected),Recall@10,0.06894100799631314,,1
+global,1,Two-stage (selected),Recall@20,0.10984159534364704,,1
+global,1,Two-stage (selected),Recall@200,0.4108656606298264,,1
+global,1,Two-stage (selected),Recall@50,0.1931552472261198,,1
 global,1,Two-tower,NDCG@10,0.18663062916718223,,1
 global,1,Two-tower,NDCG@20,0.17722111940797808,,1
 global,1,Two-tower,NDCG@200,0.22584676248778723,,1
@@ -71,22 +103,22 @@ last_k,1,EASE,Recall@10,0.08711920529801326,0.0,3
 last_k,1,EASE,Recall@20,0.15182119205298014,0.0,3
 last_k,1,EASE,Recall@200,0.6002649006622517,0.0,3
 last_k,1,EASE,Recall@50,0.29019867549668876,0.0,3
-last_k,1,GBM w/o recency sims,NDCG@10,0.1145052238678818,0.0012720239946329619,3
-last_k,1,GBM w/o recency sims,NDCG@20,0.14887632684055443,0.0015645079798480806,3
-last_k,1,GBM w/o recency sims,NDCG@200,0.26596002075640884,0.0013476098180824495,3
-last_k,1,GBM w/o recency sims,NDCG@50,0.19840977811868202,0.0008410799366370043,3
-last_k,1,GBM w/o recency sims,Recall@10,0.13451434878587196,0.001879655626214664,3
-last_k,1,GBM w/o recency sims,Recall@20,0.2151655629139073,0.0024843265538944093,3
-last_k,1,GBM w/o recency sims,Recall@200,0.626887417218543,0.0025328420406971284,3
-last_k,1,GBM w/o recency sims,Recall@50,0.3626379690949227,0.0009136513062505486,3
-last_k,1,GBM w/o two-tower feats,NDCG@10,0.12674034816748395,0.00028160345185548316,3
-last_k,1,GBM w/o two-tower feats,NDCG@20,0.1600078749243835,0.0004911916887356163,3
-last_k,1,GBM w/o two-tower feats,NDCG@200,0.2753401883365245,0.0009970572573407318,3
-last_k,1,GBM w/o two-tower feats,NDCG@50,0.20873882985804423,0.00046875611423160515,3
-last_k,1,GBM w/o two-tower feats,Recall@10,0.14465783664459161,0.0009558779291219019,3
-last_k,1,GBM w/o two-tower feats,Recall@20,0.22269315673289183,0.0009633049237818423,3
-last_k,1,GBM w/o two-tower feats,Recall@200,0.626887417218543,0.0025328420406971284,3
-last_k,1,GBM w/o two-tower feats,Recall@50,0.36815673289183226,0.0008662174021295234,3
+last_k,1,GBM on two-tower candidates,NDCG@10,0.13922333243258825,0.0008953506746719077,3
+last_k,1,GBM on two-tower candidates,NDCG@20,0.17645974530699168,0.0011027792993688996,3
+last_k,1,GBM on two-tower candidates,NDCG@200,0.28615444016659897,0.0017456934818654598,3
+last_k,1,GBM on two-tower candidates,NDCG@50,0.22717162442613995,0.0021917497567048336,3
+last_k,1,GBM on two-tower candidates,Recall@10,0.16,0.0003158739077539483,3
+last_k,1,GBM on two-tower candidates,Recall@20,0.24739514348785874,0.000727221475056473,3
+last_k,1,GBM on two-tower candidates,Recall@200,0.626887417218543,0.0025328420406971284,3
+last_k,1,GBM on two-tower candidates,Recall@50,0.3984547461368653,0.0036058269809977708,3
+last_k,1,GBM on two-tower candidates + EASE feats,NDCG@10,0.15563501587922723,0.0011152340325131765,3
+last_k,1,GBM on two-tower candidates + EASE feats,NDCG@20,0.19513557295329584,0.0013097179000859762,3
+last_k,1,GBM on two-tower candidates + EASE feats,NDCG@200,0.2995125246392066,0.0015178525693781998,3
+last_k,1,GBM on two-tower candidates + EASE feats,NDCG@50,0.24538214639213363,0.001882228117535563,3
+last_k,1,GBM on two-tower candidates + EASE feats,Recall@10,0.17711920529801325,0.0010765409408614993,3
+last_k,1,GBM on two-tower candidates + EASE feats,Recall@20,0.2696136865342163,0.0013054647135067215,3
+last_k,1,GBM on two-tower candidates + EASE feats,Recall@200,0.626887417218543,0.0025328420406971284,3
+last_k,1,GBM on two-tower candidates + EASE feats,Recall@50,0.4192604856512141,0.0030171238649633917,3
 last_k,1,Item-kNN,NDCG@10,0.0584385060968888,0.0,3
 last_k,1,Item-kNN,NDCG@20,0.07810797632685373,0.0,3
 last_k,1,Item-kNN,NDCG@200,0.17431882817749503,0.0,3
@@ -95,6 +127,38 @@ last_k,1,Item-kNN,Recall@10,0.0695364238410596,0.0,3
 last_k,1,Item-kNN,Recall@20,0.11576158940397352,0.0,3
 last_k,1,Item-kNN,Recall@200,0.4649006622516556,0.0,3
 last_k,1,Item-kNN,Recall@50,0.21453642384105964,0.0,3
+last_k,1,Multi-source GBM (all features),NDCG@10,0.16013513088227593,0.0006886473336876903,3
+last_k,1,Multi-source GBM (all features),NDCG@20,0.20073633729316495,0.0011113524375898672,3
+last_k,1,Multi-source GBM (all features),NDCG@200,0.3205823052089881,0.0008762277345370247,3
+last_k,1,Multi-source GBM (all features),NDCG@50,0.25442047527743905,0.0009404369825835607,3
+last_k,1,Multi-source GBM (all features),Recall@10,0.18306843267108167,0.0007119846985814642,3
+last_k,1,Multi-source GBM (all features),Recall@20,0.2781677704194261,0.0017881816666077755,3
+last_k,1,Multi-source GBM (all features),Recall@200,0.6949779249448124,0.0016008601111978799,3
+last_k,1,Multi-source GBM (all features),Recall@50,0.4379139072847682,0.001839760845442305,3
+last_k,1,Multi-source GBM w/o EASE feats,NDCG@10,0.1422455606945817,0.002839362654135642,3
+last_k,1,Multi-source GBM w/o EASE feats,NDCG@20,0.18112550423395368,0.0019210361250043648,3
+last_k,1,Multi-source GBM w/o EASE feats,NDCG@200,0.3019666765757499,0.002571472821112422,3
+last_k,1,Multi-source GBM w/o EASE feats,NDCG@50,0.23367834366457352,0.002588135106730625,3
+last_k,1,Multi-source GBM w/o EASE feats,Recall@10,0.16386313465783664,0.002948755596692406,3
+last_k,1,Multi-source GBM w/o EASE feats,Recall@20,0.25513245033112586,0.0007786739083645512,3
+last_k,1,Multi-source GBM w/o EASE feats,Recall@200,0.6780132450331126,0.0025554677326588937,3
+last_k,1,Multi-source GBM w/o EASE feats,Recall@50,0.41167770419426053,0.0028671239404797545,3
+last_k,1,Multi-source GBM w/o recency sims,NDCG@10,0.1330054879266711,0.0011405864241880617,3
+last_k,1,Multi-source GBM w/o recency sims,NDCG@20,0.1711228750366879,0.0015059338945315214,3
+last_k,1,Multi-source GBM w/o recency sims,NDCG@200,0.29535149266858424,0.0016657404957744824,3
+last_k,1,Multi-source GBM w/o recency sims,NDCG@50,0.22361639871652908,0.0014578993712063971,3
+last_k,1,Multi-source GBM w/o recency sims,Recall@10,0.15458057395143487,0.001503009762533625,3
+last_k,1,Multi-source GBM w/o recency sims,Recall@20,0.24402869757174395,0.0020321344297270535,3
+last_k,1,Multi-source GBM w/o recency sims,Recall@200,0.680364238410596,0.002338836210120534,3
+last_k,1,Multi-source GBM w/o recency sims,Recall@50,0.400430463576159,0.002047364676438516,3
+last_k,1,Multi-source GBM w/o two-tower feats,NDCG@10,0.15431291609196437,0.0016903822595550934,3
+last_k,1,Multi-source GBM w/o two-tower feats,NDCG@20,0.19336849536583303,0.001752294375733331,3
+last_k,1,Multi-source GBM w/o two-tower feats,NDCG@200,0.313522158113197,0.001709858885069108,3
+last_k,1,Multi-source GBM w/o two-tower feats,NDCG@50,0.24553222887338186,0.0012168152712572799,3
+last_k,1,Multi-source GBM w/o two-tower feats,Recall@10,0.17557395143487856,0.0014768855349825724,3
+last_k,1,Multi-source GBM w/o two-tower feats,Recall@20,0.26704194260485653,0.0017273642524935787,3
+last_k,1,Multi-source GBM w/o two-tower feats,Recall@200,0.6876048565121412,0.0024472715221871837,3
+last_k,1,Multi-source GBM w/o two-tower feats,Recall@50,0.42240618101545263,0.0012808764250233497,3
 last_k,1,Popularity,NDCG@10,0.0327329846609184,0.0,3
 last_k,1,Popularity,NDCG@20,0.046090362212522086,0.0,3
 last_k,1,Popularity,NDCG@200,0.11885433444335837,0.0,3
@@ -103,17 +167,17 @@ last_k,1,Popularity,Recall@10,0.03903973509933775,0.0,3
 last_k,1,Popularity,Recall@20,0.0704635761589404,0.0,3
 last_k,1,Popularity,Recall@200,0.3378476821192053,0.0,3
 last_k,1,Popularity,Recall@50,0.1375496688741722,0.0,3
-last_k,1,Two-stage (GBM rerank),NDCG@10,0.1385132554103389,0.000950525808644938,3
-last_k,1,Two-stage (GBM rerank),NDCG@20,0.17622330226125052,0.0008427077671478336,3
-last_k,1,Two-stage (GBM rerank),NDCG@200,0.28612204176322836,0.0011711453291672234,3
-last_k,1,Two-stage (GBM rerank),NDCG@50,0.22714735173138026,0.0007046139824700813,3
-last_k,1,Two-stage (GBM rerank),Recall@10,0.1586644591611479,0.0015581689862123492,3
-last_k,1,Two-stage (GBM rerank),Recall@20,0.24706401766004416,0.0010833095768048406,3
-last_k,1,Two-stage (GBM rerank),Recall@200,0.626887417218543,0.0025328420406971284,3
-last_k,1,Two-stage (GBM rerank),Recall@50,0.398719646799117,0.0007845190129764667,3
+last_k,1,Two-stage (selected),NDCG@10,0.15821304813098946,0.003354795840322914,3
+last_k,1,Two-stage (selected),NDCG@20,0.1985179705647225,0.004323961437447656,3
+last_k,1,Two-stage (selected),NDCG@200,0.3133097874832963,0.01317951448125267,3
+last_k,1,Two-stage (selected),NDCG@50,0.25093993506177975,0.006631174179865232,3
+last_k,1,Two-stage (selected),Recall@10,0.18072847682119206,0.0041055596899238645,3
+last_k,1,Two-stage (selected),Recall@20,0.2751766004415011,0.00623329162926569,3
+last_k,1,Two-stage (selected),Recall@200,0.672737306843267,0.03999888069863581,3
+last_k,1,Two-stage (selected),Recall@50,0.43129139072847683,0.01313225996996619,3
 last_k,1,Two-tower,NDCG@10,0.11300644760010313,0.0015579160178841604,3
 last_k,1,Two-tower,NDCG@20,0.14696374300640203,0.0012932534439576045,3
-last_k,1,Two-tower,NDCG@200,0.2651281435890807,0.0018176774473276022,3
+last_k,1,Two-tower,NDCG@200,0.2651281386695701,0.0018176842365801842,3
 last_k,1,Two-tower,NDCG@50,0.19754835220985748,0.0013579077979619617,3
 last_k,1,Two-tower,Recall@10,0.13247240618101544,0.002103192121892122,3
 last_k,1,Two-tower,Recall@20,0.2122075055187638,0.001399112748564298,3
@@ -121,8 +185,8 @@ last_k,1,Two-tower,Recall@200,0.626887417218543,0.0025328420406971284,3
 last_k,1,Two-tower,Recall@50,0.3628697571743929,0.0009184390314663842,3
 last_k,1,"Two-tower, ordered by sim_recent_max",NDCG@10,0.08720985049838487,0.0024049655468912985,3
 last_k,1,"Two-tower, ordered by sim_recent_max",NDCG@20,0.11589339838508632,0.0014512445840268679,3
-last_k,1,"Two-tower, ordered by sim_recent_max",NDCG@200,0.24363131696208798,0.0020356747685533775,3
-last_k,1,"Two-tower, ordered by sim_recent_max",NDCG@50,0.16424877013331882,0.0013892168304614437,3
+last_k,1,"Two-tower, ordered by sim_recent_max",NDCG@200,0.24363128401681378,0.0020356187503261045,3
+last_k,1,"Two-tower, ordered by sim_recent_max",NDCG@50,0.16424873718804464,0.0013891602279524783,3
 last_k,1,"Two-tower, ordered by sim_recent_max",Recall@10,0.10470198675496689,0.0020035164910471312,3
 last_k,1,"Two-tower, ordered by sim_recent_max",Recall@20,0.1720971302428256,0.0005700110964095185,3
 last_k,1,"Two-tower, ordered by sim_recent_max",Recall@200,0.626887417218543,0.0025328420406971284,3
@@ -135,22 +199,22 @@ last_k,4,EASE,Recall@10,0.1027462632811093,,1
 last_k,4,EASE,Recall@20,0.17634311783420373,,1
 last_k,4,EASE,Recall@200,0.6414520679512576,,1
 last_k,4,EASE,Recall@50,0.32362386697881024,,1
-last_k,4,GBM w/o recency sims,NDCG@10,0.08882887916670902,,1
-last_k,4,GBM w/o recency sims,NDCG@20,0.1164680141357944,,1
-last_k,4,GBM w/o recency sims,NDCG@200,0.2127544011885806,,1
-last_k,4,GBM w/o recency sims,NDCG@50,0.15781223028163452,,1
-last_k,4,GBM w/o recency sims,Recall@10,0.12633411369229844,,1
-last_k,4,GBM w/o recency sims,Recall@20,0.20311843447986075,,1
-last_k,4,GBM w/o recency sims,Recall@200,0.6049042559577407,,1
-last_k,4,GBM w/o recency sims,Recall@50,0.35051023470796566,,1
-last_k,4,GBM w/o two-tower feats,NDCG@10,0.10471204763107392,,1
-last_k,4,GBM w/o two-tower feats,NDCG@20,0.13238490082335796,,1
-last_k,4,GBM w/o two-tower feats,NDCG@200,0.22497724252401644,,1
-last_k,4,GBM w/o two-tower feats,NDCG@50,0.1705907601690496,,1
-last_k,4,GBM w/o two-tower feats,Recall@10,0.1418302419112792,,1
-last_k,4,GBM w/o two-tower feats,Recall@20,0.21973707905636589,,1
-last_k,4,GBM w/o two-tower feats,Recall@200,0.6049042559577407,,1
-last_k,4,GBM w/o two-tower feats,Recall@50,0.3544870640494628,,1
+last_k,4,GBM on two-tower candidates,NDCG@10,0.11348909008015627,,1
+last_k,4,GBM on two-tower candidates,NDCG@20,0.1408668354757579,,1
+last_k,4,GBM on two-tower candidates,NDCG@200,0.2317174689541985,,1
+last_k,4,GBM on two-tower candidates,NDCG@50,0.1824054937904352,,1
+last_k,4,GBM on two-tower candidates,Recall@10,0.1549312683834564,,1
+last_k,4,GBM on two-tower candidates,Recall@20,0.23083018188366647,,1
+last_k,4,GBM on two-tower candidates,Recall@200,0.6049042559577407,,1
+last_k,4,GBM on two-tower candidates,Recall@50,0.37792784680953234,,1
+last_k,4,GBM on two-tower candidates + EASE feats,NDCG@10,0.12669949491906163,,1
+last_k,4,GBM on two-tower candidates + EASE feats,NDCG@20,0.1569290116864638,,1
+last_k,4,GBM on two-tower candidates + EASE feats,NDCG@200,0.24278775014052434,,1
+last_k,4,GBM on two-tower candidates + EASE feats,NDCG@50,0.19827819038740882,,1
+last_k,4,GBM on two-tower candidates + EASE feats,Recall@10,0.17325469716069392,,1
+last_k,4,GBM on two-tower candidates + EASE feats,Recall@20,0.2569331892670628,,1
+last_k,4,GBM on two-tower candidates + EASE feats,Recall@200,0.6049042559577407,,1
+last_k,4,GBM on two-tower candidates + EASE feats,Recall@50,0.4035296236268684,,1
 last_k,4,Item-kNN,NDCG@10,0.060292851515211104,,1
 last_k,4,Item-kNN,NDCG@20,0.08034126340600163,,1
 last_k,4,Item-kNN,NDCG@200,0.16713905218587782,,1
@@ -159,6 +223,38 @@ last_k,4,Item-kNN,Recall@10,0.0837655321447866,,1
 last_k,4,Item-kNN,Recall@20,0.1402185005102347,,1
 last_k,4,Item-kNN,Recall@200,0.5130890209496368,,1
 last_k,4,Item-kNN,Recall@50,0.24913260099645837,,1
+last_k,4,Multi-source GBM (all features),NDCG@10,0.1296738248824269,,1
+last_k,4,Multi-source GBM (all features),NDCG@20,0.1617380043139492,,1
+last_k,4,Multi-source GBM (all features),NDCG@200,0.26478143019869493,,1
+last_k,4,Multi-source GBM (all features),NDCG@50,0.2062803291742342,,1
+last_k,4,Multi-source GBM (all features),Recall@10,0.17897232727054443,,1
+last_k,4,Multi-source GBM (all features),Recall@20,0.2683354342997779,,1
+last_k,4,Multi-source GBM (all features),Recall@200,0.6979260459811514,,1
+last_k,4,Multi-source GBM (all features),Recall@50,0.42641214958881085,,1
+last_k,4,Multi-source GBM w/o EASE feats,NDCG@10,0.11300364733021188,,1
+last_k,4,Multi-source GBM w/o EASE feats,NDCG@20,0.1426342353999986,,1
+last_k,4,Multi-source GBM w/o EASE feats,NDCG@200,0.2462797299384787,,1
+last_k,4,Multi-source GBM w/o EASE feats,NDCG@50,0.18585152801107743,,1
+last_k,4,Multi-source GBM w/o EASE feats,Recall@10,0.15277027432619003,,1
+last_k,4,Multi-source GBM w/o EASE feats,Recall@20,0.2361726394141305,,1
+last_k,4,Multi-source GBM w/o EASE feats,Recall@200,0.6722702443123837,,1
+last_k,4,Multi-source GBM w/o EASE feats,Recall@50,0.38913500210096647,,1
+last_k,4,Multi-source GBM w/o recency sims,NDCG@10,0.1033727597048274,,1
+last_k,4,Multi-source GBM w/o recency sims,NDCG@20,0.13403287699878177,,1
+last_k,4,Multi-source GBM w/o recency sims,NDCG@200,0.242189333894852,,1
+last_k,4,Multi-source GBM w/o recency sims,NDCG@50,0.17906000119170007,,1
+last_k,4,Multi-source GBM w/o recency sims,Recall@10,0.14628429077375593,,1
+last_k,4,Multi-source GBM w/o recency sims,Recall@20,0.2316525601776817,,1
+last_k,4,Multi-source GBM w/o recency sims,Recall@200,0.686547811993517,,1
+last_k,4,Multi-source GBM w/o recency sims,Recall@50,0.3917432018728615,,1
+last_k,4,Multi-source GBM w/o two-tower feats,NDCG@10,0.12543076427918137,,1
+last_k,4,Multi-source GBM w/o two-tower feats,NDCG@20,0.15795438653012137,,1
+last_k,4,Multi-source GBM w/o two-tower feats,NDCG@200,0.2611628770039258,,1
+last_k,4,Multi-source GBM w/o two-tower feats,NDCG@50,0.20184219185104216,,1
+last_k,4,Multi-source GBM w/o two-tower feats,Recall@10,0.17012425715829282,,1
+last_k,4,Multi-source GBM w/o two-tower feats,Recall@20,0.26094903655681617,,1
+last_k,4,Multi-source GBM w/o two-tower feats,Recall@200,0.6938321627948856,,1
+last_k,4,Multi-source GBM w/o two-tower feats,Recall@50,0.41718590551653756,,1
 last_k,4,Popularity,NDCG@10,0.03430195507671701,,1
 last_k,4,Popularity,NDCG@20,0.04866578906268475,,1
 last_k,4,Popularity,NDCG@200,0.11821141794779767,,1
@@ -167,17 +263,17 @@ last_k,4,Popularity,Recall@10,0.046632450927426614,,1
 last_k,4,Popularity,Recall@20,0.0864397622906537,,1
 last_k,4,Popularity,Recall@200,0.38794045260819976,,1
 last_k,4,Popularity,Recall@50,0.16694579506573023,,1
-last_k,4,Two-stage (GBM rerank),NDCG@10,0.11269322707816568,,1
-last_k,4,Two-stage (GBM rerank),NDCG@20,0.14172732147896624,,1
-last_k,4,Two-stage (GBM rerank),NDCG@200,0.2319029761239945,,1
-last_k,4,Two-stage (GBM rerank),NDCG@50,0.18176449139579895,,1
-last_k,4,Two-stage (GBM rerank),Recall@10,0.15163875382676031,,1
-last_k,4,Two-stage (GBM rerank),Recall@20,0.233030193889189,,1
-last_k,4,Two-stage (GBM rerank),Recall@200,0.6049042559577407,,1
-last_k,4,Two-stage (GBM rerank),Recall@50,0.3740410588870881,,1
+last_k,4,Two-stage (selected),NDCG@10,0.1296738248824269,,1
+last_k,4,Two-stage (selected),NDCG@20,0.1617380043139492,,1
+last_k,4,Two-stage (selected),NDCG@200,0.26478143019869493,,1
+last_k,4,Two-stage (selected),NDCG@50,0.2062803291742342,,1
+last_k,4,Two-stage (selected),Recall@10,0.17897232727054443,,1
+last_k,4,Two-stage (selected),Recall@20,0.2683354342997779,,1
+last_k,4,Two-stage (selected),Recall@200,0.6979260459811514,,1
+last_k,4,Two-stage (selected),Recall@50,0.42641214958881085,,1
 last_k,4,Two-tower,NDCG@10,0.08642452072894329,,1
 last_k,4,Two-tower,NDCG@20,0.11404872161273867,,1
-last_k,4,Two-tower,NDCG@200,0.21051338699651334,,1
+last_k,4,Two-tower,NDCG@200,0.21051342411212892,,1
 last_k,4,Two-tower,NDCG@50,0.15338271996163477,,1
 last_k,4,Two-tower,Recall@10,0.12080256918182365,,1
 last_k,4,Two-tower,Recall@20,0.19801908878083918,,1
@@ -185,7 +281,7 @@ last_k,4,Two-tower,Recall@200,0.6049042559577407,,1
 last_k,4,Two-tower,Recall@50,0.33732516957800585,,1
 last_k,4,"Two-tower, ordered by sim_recent_max",NDCG@10,0.0734498222170325,,1
 last_k,4,"Two-tower, ordered by sim_recent_max",NDCG@20,0.09785074150996743,,1
-last_k,4,"Two-tower, ordered by sim_recent_max",NDCG@200,0.19928565354326852,,1
+last_k,4,"Two-tower, ordered by sim_recent_max",NDCG@200,0.1992856667829946,,1
 last_k,4,"Two-tower, ordered by sim_recent_max",NDCG@50,0.13538930166653057,,1
 last_k,4,"Two-tower, ordered by sim_recent_max",Recall@10,0.10627888828861276,,1
 last_k,4,"Two-tower, ordered by sim_recent_max",Recall@20,0.17495347860015606,,1

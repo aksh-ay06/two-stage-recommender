@@ -1,61 +1,93 @@
 ### run last_k_minr1_seed43
 train=939,809 val_targets=30,200 (6,040 users) train_val=970,009 test_targets=30,200 (6,040 users)
-loading cached stage-1 outputs: last_k_minr1_seed43_e6_c200.pkl
 
 == Baselines (hyperparameters tuned on VAL) ==
-  [Item-kNN] param=20    val NDCG@10=0.0644
-  [Item-kNN] param=50    val NDCG@10=0.0647
-  [Item-kNN] param=100   val NDCG@10=0.0641
-  [Item-kNN] param=200   val NDCG@10=0.0620
-  [Item-kNN] param=400   val NDCG@10=0.0652
-  [Item-kNN] param=800   val NDCG@10=0.0661
-  [Item-kNN] param=1600  val NDCG@10=0.0629
-  [Item-kNN] param=3200  val NDCG@10=0.0616
-  [EASE] param=100   val NDCG@10=0.0700
-  [EASE] param=250   val NDCG@10=0.0726
-  [EASE] param=500   val NDCG@10=0.0744
-  [EASE] param=1000  val NDCG@10=0.0758
-  [EASE] param=2000  val NDCG@10=0.0757
-  [EASE] param=4000  val NDCG@10=0.0743
-  [EASE] param=8000  val NDCG@10=0.0719
-  [EASE] param=16000 val NDCG@10=0.0690
-  [EASE] param=32000 val NDCG@10=0.0644
-  [EASE] param=64000 val NDCG@10=0.0594
+  [Item-kNN] param=20     val NDCG@10=0.0644
+  [Item-kNN] param=50     val NDCG@10=0.0647
+  [Item-kNN] param=100    val NDCG@10=0.0641
+  [Item-kNN] param=200    val NDCG@10=0.0620
+  [Item-kNN] param=400    val NDCG@10=0.0652
+  [Item-kNN] param=800    val NDCG@10=0.0661
+  [Item-kNN] param=1600   val NDCG@10=0.0629
+  [Item-kNN] param=3200   val NDCG@10=0.0616
+  [EASE] param=100    val NDCG@10=0.0700
+  [EASE] param=250    val NDCG@10=0.0726
+  [EASE] param=500    val NDCG@10=0.0744
+  [EASE] param=1000   val NDCG@10=0.0758
+  [EASE] param=2000   val NDCG@10=0.0757
+  [EASE] param=4000   val NDCG@10=0.0743
+  [EASE] param=8000   val NDCG@10=0.0719
+  [EASE] param=16000  val NDCG@10=0.0690
+  [EASE] param=32000  val NDCG@10=0.0644
+  [EASE] param=64000  val NDCG@10=0.0594
+
+== VAL stage: two-tower on train, candidates = two-tower UNION EASE ==
+  [two-tower] epoch 1/6 loss=7.8307 (89s)
+  [two-tower] epoch 2/6 loss=6.7698 (77s)
+  [two-tower] epoch 3/6 loss=6.5178 (76s)
+  [two-tower] epoch 4/6 loss=6.3986 (97s)
+  [two-tower] epoch 5/6 loss=6.3318 (105s)
+  [two-tower] epoch 6/6 loss=6.3000 (59s)
+  candidates: candidates_per_user=309.6243, recall@200 two-tower=0.6730, recall@200 EASE=0.6259, recall union=0.7781
 
 == Rankers ==
+  -- GBM on two-tower candidates
+  [ranker] drop=['ease_score', 'ease_rank']  train rows=903,400 users=4,517 pos_rate=0.0180
+  [ranker] best_iter=114
+  -- GBM on two-tower candidates + EASE feats
   [ranker] drop=-  train rows=903,400 users=4,517 pos_rate=0.0180
-  [ranker] best_iter=227
-  [ranker] drop=['sim_recent_max', 'sim_recent_mean', 'sim_last']  train rows=903,400 users=4,517 pos_rate=0.0180
-  [ranker] best_iter=33
-  [ranker] drop=['tt_score', 'tt_rank']  train rows=903,400 users=4,517 pos_rate=0.0180
-  [ranker] best_iter=119
+  [ranker] best_iter=167
+  -- Multi-source GBM (all features)
+  [ranker] drop=-  train rows=1,479,691 users=4,778 pos_rate=0.0127
+  [ranker] best_iter=191
+  -- Multi-source GBM w/o recency sims
+  [ranker] drop=['sim_recent_max', 'sim_recent_mean', 'sim_last']  train rows=1,479,691 users=4,778 pos_rate=0.0127
+  [ranker] best_iter=75
+  -- Multi-source GBM w/o two-tower feats
+  [ranker] drop=['tt_score', 'tt_rank']  train rows=1,479,691 users=4,778 pos_rate=0.0127
+  [ranker] best_iter=106
+  -- Multi-source GBM w/o EASE feats
+  [ranker] drop=['ease_score', 'ease_rank']  train rows=1,479,691 users=4,778 pos_rate=0.0127
+  [ranker] best_iter=69
 
-VAL (ranker-holdout users, n=1208) -> selected ranker: GBM (all features)
-                                      NDCG@10  Recall@10  NDCG@20  Recall@200
-Popularity                             0.0350     0.0407   0.0488      0.3457
-Item-kNN                               0.0627     0.0758   0.0848      0.4944
-EASE                                   0.0729     0.0916   0.1034      0.6207
-Two-tower                              0.1226     0.1469   0.1627      0.6775
-Two-tower, ordered by sim_recent_max   0.0953     0.1136   0.1297      0.6775
-GBM (all features)                     0.1494     0.1732   0.1908      0.6775
-GBM w/o recency sims                   0.1260     0.1502   0.1634      0.6775
-GBM w/o two-tower feats                0.1373     0.1553   0.1731      0.6775
+VAL (ranker-holdout users, n=1208) -> selected ranker: Multi-source GBM (all features)
+                                          NDCG@10  Recall@10  NDCG@20  Recall@200
+Popularity                                 0.0350     0.0407   0.0488      0.3457
+Item-kNN                                   0.0627     0.0758   0.0848      0.4944
+EASE                                       0.0729     0.0916   0.1034      0.6207
+Two-tower                                  0.1226     0.1469   0.1626      0.6775
+Two-tower, ordered by sim_recent_max       0.0953     0.1136   0.1297      0.6775
+GBM on two-tower candidates                0.1490     0.1705   0.1904      0.6775
+GBM on two-tower candidates + EASE feats   0.1633     0.1891   0.2065      0.6775
+Multi-source GBM (all features)            0.1647     0.1907   0.2100      0.7257
+Multi-source GBM w/o recency sims          0.1387     0.1652   0.1813      0.7096
+Multi-source GBM w/o two-tower feats       0.1586     0.1820   0.1991      0.7159
+Multi-source GBM w/o EASE feats            0.1477     0.1733   0.1889      0.7103
+
+== TEST stage: two-tower on train+val ==
+  loaded two-tower weights last_k_minr1_seed43_e6.tt_test.pt
+  candidates: candidates_per_user=309.5725, recall@200 two-tower=0.6245, recall@200 EASE=0.6003, recall union=0.7440
 
 TEST (6,040 users) - reporting only:
-                                      Recall@10  NDCG@10  Recall@20  NDCG@20  Recall@50  NDCG@50  Recall@200  NDCG@200
-Popularity                               0.0390   0.0327     0.0705   0.0461     0.1375   0.0684      0.3378    0.1189
-Item-kNN                                 0.0695   0.0584     0.1158   0.0781     0.2145   0.1111      0.4649    0.1743
-EASE                                     0.0871   0.0712     0.1518   0.0988     0.2902   0.1449      0.6003    0.2240
-Two-tower                                0.1302   0.1113     0.2107   0.1456     0.3619   0.1963      0.6245    0.2635
-Two-tower, ordered by sim_recent_max     0.1032   0.0854     0.1727   0.1150     0.3171   0.1633      0.6245    0.2421
-GBM (all features)                       0.1572   0.1377     0.2464   0.1758     0.3991   0.2270      0.6245    0.2853
-GBM w/o recency sims                     0.1327   0.1131     0.2124   0.1471     0.3623   0.1975      0.6245    0.2644
-GBM w/o two-tower feats                  0.1441   0.1268     0.2217   0.1599     0.3674   0.2087      0.6245    0.2750
+                                          Recall@10  NDCG@10  Recall@20  NDCG@20  Recall@50  NDCG@50  Recall@200  NDCG@200
+Popularity                                   0.0390   0.0327     0.0705   0.0461     0.1375   0.0684      0.3378    0.1189
+Item-kNN                                     0.0695   0.0584     0.1158   0.0781     0.2145   0.1111      0.4649    0.1743
+EASE                                         0.0871   0.0712     0.1518   0.0988     0.2902   0.1449      0.6003    0.2240
+Two-tower                                    0.1302   0.1113     0.2107   0.1456     0.3619   0.1963      0.6245    0.2635
+Two-tower, ordered by sim_recent_max         0.1032   0.0854     0.1727   0.1150     0.3171   0.1633      0.6245    0.2421
+GBM on two-tower candidates                  0.1602   0.1392     0.2466   0.1760     0.3974   0.2266      0.6245    0.2853
+GBM on two-tower candidates + EASE feats     0.1771   0.1559     0.2698   0.1955     0.4194   0.2458      0.6245    0.2993
+Multi-source GBM (all features)              0.1824   0.1594     0.2771   0.1999     0.4380   0.2540      0.6952    0.3202
+Multi-source GBM w/o recency sims            0.1533   0.1330     0.2431   0.1712     0.3995   0.2237      0.6805    0.2957
+Multi-source GBM w/o two-tower feats         0.1745   0.1528     0.2658   0.1918     0.4231   0.2446      0.6862    0.3121
+Multi-source GBM w/o EASE feats              0.1605   0.1390     0.2542   0.1790     0.4084   0.2307      0.6756    0.2991
 
-  GBM (all features) vs Two-tower: NDCG@10 +23.8%  95% CI [+20.3%, +27.3%]
-  GBM (all features) vs EASE: NDCG@10 +93.4%  95% CI [+84.1%, +103.7%]
-  GBM (all features) vs Item-kNN: NDCG@10 +135.7%  95% CI [+124.1%, +149.4%]
-  GBM (all features) vs Two-tower, ordered by sim_recent_max: NDCG@10 +61.2%  95% CI [+55.4%, +67.6%]
+  Multi-source GBM (all features) vs Two-tower: NDCG@10 +43.3%  95% CI [+38.8%, +47.6%]
+  Multi-source GBM (all features) vs EASE: NDCG@10 +123.8%  95% CI [+114.2%, +134.9%]
+  Multi-source GBM (all features) vs Item-kNN: NDCG@10 +172.8%  95% CI [+159.5%, +188.0%]
+  Multi-source GBM (all features) vs GBM on two-tower candidates: NDCG@10 +14.5%  95% CI [+12.3%, +16.8%]
+  GBM on two-tower candidates vs Two-tower: NDCG@10 +25.1%  95% CI [+21.7%, +28.6%]
+  GBM on two-tower candidates vs EASE: NDCG@10 +95.4%  95% CI [+86.2%, +105.7%]
   EASE vs Two-tower: NDCG@10 -36.0%  95% CI [-39.2%, -32.6%]
 
-Saved C:\Users\ap783\OneDrive\Desktop\Recommender System\results\runs\last_k_minr1_seed43  (162s)
+Saved C:\Users\ap783\OneDrive\Desktop\Recommender System\results\runs\last_k_minr1_seed43  (892s)
