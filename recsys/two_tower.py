@@ -32,6 +32,7 @@ class TwoTowerConfig:
     temperature: float = 0.05
     dropout: float = 0.1
     seed: int = 42
+    logq: bool = True  # subtract log item frequency from in-batch logits
 
 
 def _mlp(d_in: int, d_out: int, dropout: float) -> nn.Sequential:
@@ -102,18 +103,23 @@ class HistoryIndex:
 
 
 def train_two_tower(ds: Dataset, train_df: pd.DataFrame, cfg: TwoTowerConfig = TwoTowerConfig(),
-                    min_rating: int = 1) -> tuple[TwoTower, HistoryIndex]:
-    """History is built from every interaction; only rows rated >= min_rating are training targets."""
+                    min_rating: int = 1, model: nn.Module | None = None) -> tuple[TwoTower, HistoryIndex]:
+    """History is built from every interaction; only rows rated >= min_rating are training targets.
+
+    ``model`` lets another dataset supply its own towers (anything with ``pad``, ``user_vec``,
+    ``item_vec``); logs without a ``rating`` column use every row as a target.
+    """
     torch.manual_seed(cfg.seed)
     rng = np.random.default_rng(cfg.seed)
-    model = TwoTower(ds, cfg)
+    model = model if model is not None else TwoTower(ds, cfg)
     hidx = HistoryIndex(train_df, model.pad, cfg.hist_len)
     opt = torch.optim.AdamW(model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay)
 
     users_all = torch.tensor(train_df.user.to_numpy(), dtype=torch.long)
     items_all = hidx.items
     start_all = torch.tensor(hidx.user_start, dtype=torch.long)
-    eligible = np.flatnonzero(train_df.rating.to_numpy() >= min_rating)
+    eligible = (np.flatnonzero(train_df.rating.to_numpy() >= min_rating) if "rating" in train_df
+                else np.arange(len(train_df)))
     n = len(eligible)
     # logQ: sampling probability of each item as an in-batch negative ~ its frequency.
     freq = np.bincount(train_df.item.to_numpy()[eligible], minlength=ds.n_items) + 1.0
@@ -131,7 +137,9 @@ def train_two_tower(ds: Dataset, train_df: pd.DataFrame, cfg: TwoTowerConfig = T
             u, it = users_all[rows], items_all[rows]
             hist = hidx.gather(rows, start_all[rows])
             uv, iv = model.user_vec(u, hist), model.item_vec(it)
-            logits = uv @ iv.T / cfg.temperature - log_q[it].unsqueeze(0)
+            logits = uv @ iv.T / cfg.temperature
+            if cfg.logq:
+                logits = logits - log_q[it].unsqueeze(0)
             same_item = (it.unsqueeze(0) == it.unsqueeze(1)) & ~torch.eye(len(it), dtype=torch.bool)
             logits = logits.masked_fill(same_item, float("-inf"))
             loss = F.cross_entropy(logits, torch.arange(len(it)))

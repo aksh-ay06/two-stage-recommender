@@ -20,11 +20,18 @@ def ndcg_at_k(hits: np.ndarray, n_rel: np.ndarray, k: int) -> np.ndarray:
     return dcg / idcg
 
 
-def evaluate(ranked: np.ndarray, targets: list[set], ks=(10, 20, 50)) -> dict[str, np.ndarray]:
+def map_at_k(hits: np.ndarray, n_rel: np.ndarray, k: int) -> np.ndarray:
+    """Average precision at k, normalised by min(|T|, k) (the H&M Kaggle MAP@12 definition)."""
+    h = hits[:, :k]
+    prec = np.cumsum(h, 1) / np.arange(1, k + 1)
+    return (prec * h).sum(1) / np.minimum(n_rel, k)
+
+
+def evaluate(ranked: np.ndarray, targets: list[set], ks=(10, 20, 50), maps=()) -> dict[str, np.ndarray]:
     """Per-user metric arrays (keep them per-user so we can bootstrap)."""
     hits = hits_matrix(ranked, targets)
     n_rel = np.array([len(t) for t in targets], dtype=float)
-    out = {}
+    out = {f"MAP@{k}": map_at_k(hits, n_rel, k) for k in maps if k <= ranked.shape[1]}
     for k in ks:
         if k <= ranked.shape[1]:
             out[f"Recall@{k}"] = recall_at_k(hits, n_rel, k)

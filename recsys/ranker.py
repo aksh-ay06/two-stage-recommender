@@ -30,7 +30,7 @@ def split_ranker_users(users: np.ndarray, holdout_frac: float = 0.2, seed: int =
 
 
 def train_ranker(df: pd.DataFrame, train_users: np.ndarray, hold_users: np.ndarray,
-                 drop=(), seed: int = 42) -> lgb.LGBMRanker:
+                 drop=(), seed: int = 42, categorical=None, eval_at: int = 10) -> lgb.LGBMRanker:
     # Users with no positive among their candidates give LambdaRank zero gradient; drop them.
     # Build each slice once, with only the columns needed (keeps peak memory low).
     keep = (df.groupby("user").label.transform("max") > 0).to_numpy()
@@ -58,7 +58,8 @@ def train_ranker(df: pd.DataFrame, train_users: np.ndarray, hold_users: np.ndarr
     model.fit(
         X_tr, y_tr, group=g_tr,
         eval_X=(X_va,), eval_y=(y_va,), eval_group=[g_va],
-        eval_at=[10], categorical_feature=[c for c in CATEGORICAL if c in cols],
+        eval_at=[eval_at],
+        categorical_feature=[c for c in (CATEGORICAL if categorical is None else categorical) if c in cols],
         callbacks=[lgb.early_stopping(50, verbose=False)],
     )
     print(f"  [ranker] best_iter={model.best_iteration_}")

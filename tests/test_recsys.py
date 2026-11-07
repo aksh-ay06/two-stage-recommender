@@ -170,3 +170,27 @@ def test_rerank_handles_variable_group_sizes():
     from recsys.ranker import rerank_by
     df = pd.DataFrame({"user": [0, 0, 0, 1, 1], "item": [7, 8, 9, 3, 4], "s": [0.1, 0.9, 0.5, 0.2, 0.3]})
     assert rerank_by(df, "s", 2).tolist() == [[8, 9], [4, 3]]
+
+
+# ---------------------------------------------------------------- H&M pieces
+def test_map_at_k_matches_kaggle_definition():
+    from recsys.metrics import map_at_k
+    hits = np.array([[1, 0, 1, 0], [0, 0, 0, 0], [0, 1, 0, 0]], dtype=bool)
+    n_rel = np.array([2.0, 3.0, 5.0])
+    # user 0: (1/1 + 2/3) / min(2, 4); user 1: 0; user 2: (1/2) / min(5, 4)
+    np.testing.assert_allclose(map_at_k(hits, n_rel, 4), [(1 + 2 / 3) / 2, 0.0, 0.5 / 4])
+
+
+def test_pair_lookup_hits_and_defaults():
+    from recsys.hm_features import PairLookup
+    lk = PairLookup([3, 1, 3], [7, 2, 0], 10, cnt=[5, 6, 7])
+    np.testing.assert_array_equal(lk.get([1, 3, 3, 2], [2, 0, 7, 2], "cnt", default=-1), [6, 7, 5, -1])
+
+
+def test_hm_label_and_fill():
+    import pandas as pd
+    from recsys.hm_features import fill, label
+    cand = pd.DataFrame({"user": [0, 0, 2, 2], "item": [5, 6, 5, 9]})
+    np.testing.assert_array_equal(label(cand, np.array([0, 2]), [{6}, {5, 1}], n_items=10), [0, 1, 1, 0])
+    # de-duplicates the list, then pads with best-sellers it hasn't used
+    np.testing.assert_array_equal(fill([[4, 4, 2], []], np.array([2, 7, 8]), 3), [[4, 2, 7], [2, 7, 8]])
