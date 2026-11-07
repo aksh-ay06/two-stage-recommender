@@ -1,10 +1,12 @@
-# A/B Test Plan: Two-Stage Recommender (Two-Tower + GBM Rerank)
+# A/B Test Plan: Two-Stage Recommender (Two-Tower + EASE Candidates, GBM Rerank)
 
 ## 1. Hypothesis
-Reranking two-tower candidates with a LightGBM LambdaRank model puts more relevant
-titles at the top of the "Recommended for you" row, and that increases engagement
-with it. Offline the reranker improves NDCG@10 over two-tower ordering alone
-(see `RESULTS.md`). This test checks whether that gain carries over to real users.
+Adding EASE as a second candidate source, and reranking the union with a LightGBM
+LambdaRank model, puts more relevant titles at the top of the "Recommended for you" row.
+That should increase engagement with the row. Offline, this system improves NDCG@10 over
+two-tower ordering alone by 36–43%. It beats the single-source reranker, which reranks
+two-tower candidates only, by 12–15% (see `RESULTS.md`). This test checks whether those
+gains carry over to real users.
 
 * **H0:** the treatment does not change plays from recommendations per user.
 * **H1:** the treatment changes it (two-sided test; we ship only if the effect is positive).
@@ -12,12 +14,20 @@ with it. Offline the reranker improves NDCG@10 over two-tower ordering alone
 ## 2. Variants
 | Arm | Retrieval | Ranking | Traffic |
 |---|---|---|---|
-| **A: control** | current production system (or the two-tower model alone if there's no incumbent) | two-tower score | 50% |
-| **B: treatment** | same two-tower model (same version and candidate count) | LightGBM reranker | 50% |
+| **A: control** | current production system (or the two-tower model alone if there's no incumbent) | two-tower score | 34% |
+| **B: single-source** | same two-tower model, top 200 | LightGBM reranker without EASE features | 33% |
+| **C: multi-source (ship candidate)** | two-tower top 200 ∪ EASE top 200 | LightGBM reranker, all features | 33% |
 
-Both arms share retrieval, so the test isolates the reranker. If we also need to know
-whether the two-tower model beats the incumbent retriever, run that as its own
-experiment or as a third arm, and don't bundle the two changes together.
+The treatment changes two things: retrieval (a second candidate source) and ranking.
+Arm B separates them:
+
+- **C vs A** is the decision comparison.
+- **B vs A** measures the reranker alone.
+- **C vs B** measures what the second source adds.
+
+Offline, C − B is about a third of C − A, so C vs B is diagnostic. It isn't powered as a
+decision on its own. If traffic is too tight for three arms, run A vs C and use
+interleaving (section 9) to compare B with C.
 
 ## 3. Unit, assignment, exposure
 * **Randomization unit:** logged-in user (`hash(user_id, salt) mod 100`). This keeps the
@@ -38,9 +48,10 @@ over the test window. It's the closest online counterpart to NDCG/Recall@K.
 * Total watch time per user across the whole product (checks for cannibalization)
 
 **Guardrails (must not get worse, non-inferiority margin of -1% relative):**
-* p95 recommendation latency. Offline, the reranker adds feature transform + GBM scoring of
-  200 candidates, about 9 ms of a 13 ms end-to-end p95 on one CPU thread
-  (`scripts/benchmark_serving.py`). Check it under production load in the A/A period.
+* p95 recommendation latency. Offline, arm C runs at 12.6 ms p95 and 16.6 ms p99 end to
+  end on one CPU thread (`scripts/benchmark_serving.py`). Of that, EASE retrieval is about
+  2.8 ms p95, and GBM scoring of about 310 candidates is about 8 ms p95. Check it under
+  production load in the A/A period.
 * Overall sessions per user and 7-day retention
 * Error or empty-row rate
 
@@ -52,6 +63,11 @@ Example: baseline is 0.80 rec-plays per user per week, SD is 1.6, and the minimu
 detectable effect is +2% relative (0.016). With α = 0.05 (two-sided) and 80% power:
 
 n per arm ≈ 2 · (1.96 + 0.84)² · σ² / δ² = 2 · 7.84 · 2.56 / 0.016² ≈ **157k exposed users per arm**
+
+With three arms there are two comparisons against control. Splitting α with Bonferroni
+gives α = 0.025 per comparison, so z = 2.24: n per arm ≈ 2 · (2.24 + 0.84)² · 2.56 / 0.016²
+≈ **190k exposed users per arm**, about 570k in total. Dunnett's correction is slightly less
+conservative.
 
 * **CUPED:** use each user's pre-period rec-plays as the covariate. That typically
   removes 30–50% of the variance and cuts the required n by the same share.
@@ -79,8 +95,10 @@ n per arm ≈ 2 · (1.96 + 0.84)² · σ² / δ² = 2 · 7.84 · 2.56 / 0.016² 
   understanding the result, not for fishing.
 
 ## 8. Decision rule
-* **Ship** if the primary metric goes up with a 95% CI excluding 0 **and** every
-  guardrail passes non-inferiority.
+* **Ship C** if C vs A on the primary metric goes up with a 95% CI excluding 0 (after the
+  α split) **and** every guardrail passes non-inferiority.
+* **Ship B instead** if C doesn't beat B and B passes the same test. B is simpler to
+  serve, with no EASE matrix and fewer candidates to score.
 * **Iterate** if the primary metric is flat but secondaries move (e.g. CTR up, completion
   down). That suggests the ranker is optimizing for the wrong label. Retrain on
   completions or watch time instead of "rated it".
