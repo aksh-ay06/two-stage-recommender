@@ -1,11 +1,8 @@
 val: history 3,606,578 purchases, 520,319 customers | target week buyers 72,019, evaluated (have history) 52,572 (73%), mean items bought 3.2
 test: history 3,338,832 purchases, 505,310 customers | target week buyers 68,984, evaluated (have history) 49,219 (71%), mean items bought 3.1
-== two-tower training on the validation-stage history ==
-  [two-tower] epoch 1/3 loss=8.6767 (459s)
-  [two-tower] epoch 2/3 loss=7.9309 (435s)
-  [two-tower] epoch 3/3 loss=7.7841 (415s)
+loaded two-tower weights hm_tt_w12_e3_s42.pt
 == VAL stage ==
-  EASE lambda on val (MAP@12): {50: 0.016224639664788473, 200: 0.015476131389003412, 800: 0.014897171473808379, 3200: 0.014469563019652305} -> 50
+  EASE lambda on val (MAP@12): {0.2: 0.016040921745802697, 0.8: 0.01603999957769303, 3: 0.016013435574566526, 12: 0.01599294330063675, 50: 0.016224639664788473, 200: 0.015476131389003412, 800: 0.014897171473808379, 3200: 0.014469563019652305} -> 50
   val chunk: 4,000 users, 653,340 candidate rows, pos rate 0.0029
   val chunk: 4,000 users, 654,276 candidate rows, pos rate 0.0031
   val chunk: 4,000 users, 654,217 candidate rows, pos rate 0.0028
@@ -21,19 +18,19 @@ Multi-source GBM (all features)       0.0406     0.0841   0.0596
 Multi-source GBM w/o two-tower feats  0.0411     0.0840   0.0599
 VAL (ranker-holdout users, n=2,400) -> selected ranker: Multi-source GBM w/o two-tower feats
 == TEST stage ==
-  test chunk: 4,000 users, 661,236 rows (1623s)
-  test chunk: 4,000 users, 660,953 rows (1631s)
-  test chunk: 4,000 users, 660,968 rows (1638s)
-  test chunk: 4,000 users, 661,299 rows (1646s)
-  test chunk: 4,000 users, 662,054 rows (1654s)
-  test chunk: 4,000 users, 661,038 rows (1662s)
-  test chunk: 4,000 users, 659,832 rows (1670s)
-  test chunk: 4,000 users, 660,617 rows (1679s)
-  test chunk: 4,000 users, 659,668 rows (1688s)
-  test chunk: 4,000 users, 660,230 rows (1696s)
-  test chunk: 4,000 users, 660,805 rows (1705s)
-  test chunk: 4,000 users, 661,471 rows (1713s)
-  test chunk: 1,219 users, 201,640 rows (1716s)
+  test chunk: 4,000 users, 661,236 rows (255s)
+  test chunk: 4,000 users, 660,953 rows (263s)
+  test chunk: 4,000 users, 660,968 rows (272s)
+  test chunk: 4,000 users, 661,299 rows (280s)
+  test chunk: 4,000 users, 662,054 rows (289s)
+  test chunk: 4,000 users, 661,038 rows (297s)
+  test chunk: 4,000 users, 659,832 rows (306s)
+  test chunk: 4,000 users, 660,617 rows (314s)
+  test chunk: 4,000 users, 659,668 rows (323s)
+  test chunk: 4,000 users, 660,230 rows (331s)
+  test chunk: 4,000 users, 660,805 rows (340s)
+  test chunk: 4,000 users, 661,471 rows (350s)
+  test chunk: 1,219 users, 201,640 rows (352s)
 
 TEST (49,219 users):
                                       MAP@12  Recall@12  NDCG@12
@@ -53,4 +50,4 @@ Multi-source GBM w/o two-tower feats  0.0381     0.0780   0.0550
   Multi-source GBM w/o two-tower feats vs Multi-source GBM (all features): MAP@12 +1.1%  95% CI [-0.3%, +2.6%]
   GBM on two-tower candidates vs Two-tower: MAP@12 +146.3%  95% CI [+131.1%, +163.4%]
 
-Saved C:\Users\ap783\OneDrive\Desktop\Recommender System\results\hm  (1727s)
+Saved C:\Users\ap783\OneDrive\Desktop\Recommender System\results\hm  (364s)

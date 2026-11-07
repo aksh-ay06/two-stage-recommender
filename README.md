@@ -176,6 +176,7 @@ AB_TEST_PLAN.md         online experiment design
    6 ms scoring step. Also try scoring fewer candidates, such as the top 150 per source.
 3. **Scalable EASE:** sparsify B, or precompute EASE candidates offline, before moving to
    a catalog of 100k+ items.
-4. **H&M retrieval recall:** the four-source union finds only 18.5% of purchases. Extend
-   the EASE λ grid below 50 (the chosen value is at the edge), add more sources (items
-   bought together with recent purchases, trending items by age group), and run more seeds.
+4. **H&M retrieval recall:** the four-source union finds only 18.5% of purchases. Add more
+   sources (items bought together with recent purchases, trending items by age group), and
+   run more seeds. Tuning EASE λ further won't help: λ = 50 is an interior optimum of a grid
+   from 0.2 to 3200.

@@ -280,7 +280,8 @@ and the log is `results/logs/hm_full.log`.
 - **Re-buy:** up to 30 articles the customer bought before.
 - **Popular:** last week's 30 best-sellers.
 
-**Decisions on validation.** EASE λ was picked on the validation week (λ = 50). Three
+**Decisions on validation.** EASE λ was picked on the validation week (λ = 50, from
+0.2 to 3200). Three
 LambdaRank variants were trained on 9,600 validation users, and the one with the best MAP@12
 on the other 2,400 (ranker-holdout) users was selected:
 
@@ -350,9 +351,10 @@ What this shows:
 **H&M-specific caveats:**
 
 - **One seed.** The CIs cover variation across users, not across training runs.
-- **EASE λ = 50 is at the bottom edge of the grid** {50, 200, 800, 3200}; validation MAP@12
-  was still rising as λ fell (0.0145 → 0.0162). A lower λ might give a stronger EASE
-  baseline and better EASE candidates.
+- **EASE is weak on this data however λ is set.** The grid is {0.2, 0.8, 3, 12, 50, 200,
+  800, 3200}, and λ = 50 is an interior optimum. Validation MAP@12 peaks at 0.0162 there; it
+  falls to 0.0145 at λ = 3200 but stays flat around 0.0160 for every λ ≤ 12. So EASE's
+  weakness here isn't a tuning artefact.
 - **29% of test-week buyers aren't scored**, because they have no purchase in the 12-week
   window. They are cold-start users for every system here.
 - **logQ matters for the two-tower model.** On the smoke setting (3,000 test users),

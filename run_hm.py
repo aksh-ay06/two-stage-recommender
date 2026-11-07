@@ -161,7 +161,7 @@ def main():
     tune_users = val_users[: min(4000, len(val_users))]
     tune_tg = [vr.tgt[u] for u in tune_users.tolist()]
     ease_scores = {}
-    for lam in (50, 200, 800, 3200):
+    for lam in (0.2, 0.8, 3, 12, 50, 200, 800, 3200):
         vr.ease.fit(lam)
         Se = vr.ease.scores(tune_users)
         ease_scores[lam] = float(metrics(vr.ease.items[np.argsort(-Se, 1)[:, :K]], tune_tg)[f"MAP@{K}"].mean())
